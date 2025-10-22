@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Airport Rush Game",
+            "type": "shell",
+            "command": "clang++",
+            "args": [
+                "-o",
+                "airport_rush",
+                "P58-SEC-1234.cpp",
+                "-framework", "OpenGL",
+                "-framework", "GLUT",
+                "-lGLEW",
+                "-I/opt/homebrew/include",
+                "-L/opt/homebrew/lib"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
