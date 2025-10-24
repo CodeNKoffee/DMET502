@@ -861,8 +861,15 @@ void* playWinMusic(void* arg) {
     // Start the first song in background for immediate playback
     system("afplay \"assets/sounds/The Stranglers - Golden Brown.mp3\" &");
     
-    // Wait a bit for the first song to start, then switch to proper looping
-    usleep(500000); // 0.5 second delay to let first song start
+    // Wait for the first song to finish (approximately 3 minutes)
+    // This allows takeoff sound to play in parallel during first playback
+    usleep(1800000); // 3 minutes in microseconds
+    
+    // Kill any remaining background processes to prevent conflicts
+    system("pkill -f 'The Stranglers - Golden Brown.mp3'");
+    
+    // Small delay to ensure cleanup
+    usleep(100000); // 0.1 second delay
     
     // Keep playing in loop until stop signal
     while (!shouldStopWinMusic) {
@@ -1368,7 +1375,7 @@ void display()
     char loseText[100];
     sprintf(loseText, "Final Score: %d", score);
     print(432, 280, loseText);
-    print(227, 240, (char *)"Better luck with booking your next flight... ERRRR x_x");
+    print(227, 240, (char *)"Better luck with booking your next flight... ROMANIA x_x");
     print(400, 200, (char *)"Press R to play again!");
   }
 
