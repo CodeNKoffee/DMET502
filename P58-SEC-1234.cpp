@@ -1225,9 +1225,10 @@ void display()
   print(700, 50, (char *)"Click Below to Select Item.");
   print(700, 20, (char *)"Click on Map to Place.");
 
-  // Game end screens (remain the same)
+  // Game end screens with centered text and background
   if (gameState == WIN)
   {
+    // Background with Romania flag colors
     glBegin(GL_QUADS);
     glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
     glVertex2f(200, 250);
@@ -1240,28 +1241,52 @@ void display()
     glVertex2f(200, 350);
     glEnd();
 
+    // Dark background behind text for better readability
     glColor3f(0.0f, 0.0f, 0.0f);
+    glBegin(GL_QUADS);
+    glVertex2f(180, 240);
+    glVertex2f(820, 240);
+    glVertex2f(820, 360);
+    glVertex2f(180, 360);
+    glEnd();
+
+    // Centered text
+    glColor3f(1.0f, 1.0f, 1.0f);
     char winText[100];
     sprintf(winText, "BOARDING COMPLETE! Score: %d", score);
-    print(280, 300, winText);
-    print(320, 270, (char *)"You caught your flight to Munich!");
+    print(350, 300, winText);
+    print(380, 270, (char *)"You caught your flight to Munich!");
   }
   else if (gameState == LOSE)
   {
+    // Background with Romania flag colors
     glBegin(GL_QUADS);
-    glColor3f(0.0f, 0.0f, 0.0f);
+    glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
     glVertex2f(200, 250);
     glVertex2f(800, 250);
+    glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
+    glVertex2f(800, 300);
+    glVertex2f(200, 300);
     glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
     glVertex2f(800, 350);
     glVertex2f(200, 350);
     glEnd();
 
+    // Dark background behind text for better readability
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glBegin(GL_QUADS);
+    glVertex2f(180, 240);
+    glVertex2f(820, 240);
+    glVertex2f(820, 360);
+    glVertex2f(180, 360);
+    glEnd();
+
+    // Centered text
     glColor3f(1.0f, 1.0f, 1.0f);
     char loseText[100];
     sprintf(loseText, "FLIGHT MISSED! Score: %d", score);
-    print(300, 300, loseText);
-    print(310, 270, (char *)"Better luck next time!");
+    print(400, 300, loseText);
+    print(420, 270, (char *)"Better luck next time!");
   }
 
   glFlush();
