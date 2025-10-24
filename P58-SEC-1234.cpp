@@ -3,27 +3,26 @@
 #include <string.h>
 #include <vector>
 #include <algorithm>
-// NEW: Define GL_SILENCE_DEPRECATION before including OpenGL headers to suppress warnings
 #define GL_SILENCE_DEPRECATION
 #include <GLUT/glut.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <unistd.h> 
 
-// ROMANIA FLAG COLORS (Values kept, but included for context)
+// ROMANIA FLAG COLORS
 #define ROMANIA_BLUE_R 0.0f
 #define ROMANIA_BLUE_G 0.169f
-#define ROMANIA_BLUE_B 0.498f // #002B7F
+#define ROMANIA_BLUE_B 0.498f
 
 #define ROMANIA_YELLOW_R 0.988f
 #define ROMANIA_YELLOW_G 0.820f
-#define ROMANIA_YELLOW_B 0.086f // #FCD116
+#define ROMANIA_YELLOW_B 0.086f
 
 #define ROMANIA_RED_R 0.808f
 #define ROMANIA_RED_G 0.067f
-#define ROMANIA_RED_B 0.149f // #CE1126
+#define ROMANIA_RED_B 0.149f
 
-// --- Existing BMP Texture Loading ---
+// --- BMP Texture Loading ---
 
 struct BMPHeader
 {
@@ -114,7 +113,6 @@ GLuint loadBMPTexture(const char *filename) {
     return 0;
   }
 
-  // Allocate memory for image data
   int dataSize = width * height * 3;
   unsigned char *imageData = (unsigned char *)malloc(dataSize);
   if (!imageData) {
@@ -123,12 +121,10 @@ GLuint loadBMPTexture(const char *filename) {
     return 0;
   }
 
-  // Seek to image data
   fseek(file, dataOffset, SEEK_SET);
   fread(imageData, 1, dataSize, file);
   fclose(file);
 
-  // Flip image vertically (BMP stores bottom-up)
   for (int i = 0; i < height / 2; i++) {
     for (int j = 0; j < width * 3; j++) {
       unsigned char temp = imageData[i * width * 3 + j];
@@ -145,7 +141,6 @@ GLuint loadBMPTexture(const char *filename) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  // Check for OpenGL errors
   GLenum err = glGetError();
   if (err != GL_NO_ERROR) {
     printf("OpenGL Error after texture setup: %d\n", err);
@@ -185,7 +180,6 @@ const int BOTTOM_PANEL_HEIGHT = 100;
 const int GAME_AREA_TOP = WINDOW_HEIGHT - TOP_PANEL_HEIGHT;
 const int GAME_AREA_BOTTOM = BOTTOM_PANEL_HEIGHT;
 
-// --- Add camera variables ---
 float cameraOffsetX = 0;
 float cameraOffsetY = 0;
 
@@ -198,32 +192,26 @@ enum GameState
 };
 GameState gameState = SETUP;
 
-// Player
-float playerX = 500, playerY = 50; // Start position at the very bottom of the map
+float playerX = 500, playerY = 50;
 float playerAngle = 0;
 const float PLAYER_SIZE = 20;
 const float PLAYER_SPEED = 3.0f;
 float currentSpeed = PLAYER_SPEED;
 
-// Game Target (Plane on Runway)
-// Position the plane at the actual runway coordinates on the airport map
-float planeX = 500, planeY = 450; // Positioned on the runway of the airport map
+float planeX = 500, planeY = 450;
 float bezierT = 0.0f;
 float bezierSpeed = 0.01f;
-// Bezier curve points for plane movement along the runway (relative to map coordinates)
-int bezierP0[2] = {400, 450};  // Start of runway
-int bezierP1[2] = {500, 450};  // Middle of runway
-int bezierP2[2] = {600, 450};  // End of runway
-int bezierP3[2] = {500, 450};  // Back to middle
+int bezierP0[2] = {400, 450};
+int bezierP1[2] = {500, 450};
+int bezierP2[2] = {600, 450};
+int bezierP3[2] = {500, 450};
 
-// Game Objects
 std::vector<GameObject> obstacles;
 std::vector<GameObject> collectibles;
 std::vector<PowerUp> powerups;
-GameObject friendObj = {487, 400, 30, 35, true, 0, 0}; // Friend positioned at top of map
+GameObject friendObj = {487, 400, 30, 35, true, 0, 0};
 bool friendCollected = false;
 
-// Game Stats
 int score = 0;
 int lives = 5;
 int gameTime = 60;
@@ -239,22 +227,18 @@ enum DrawingMode
 };
 DrawingMode drawingMode = NONE;
 
-// Power-up Effects
 bool invincible = false;
 float invincibleTimer = 0;
 bool speedBoost = false;
 float speedBoostTimer = 0;
 
-// Animation Variables
 float collectibleRotation = 0;
 float conveyorOffset = 0;
 
-// Texture IDs
 GLuint mapTexture;
 GLuint playerTexture, planeTexture, guardTexture, boardingPassTexture;
 GLuint friendTexture, badgeTexture, fastTrackTexture, luggageTexture, panelTexture;
 
-// FORWARD DECLARATION FOR COLLISION FUNCTION (Fixes the 'undeclared identifier' error)
 bool checkCollision(float x1, float y1, float w1, float h1,
                     float x2, float y2, float w2, float h2);
 
@@ -277,9 +261,7 @@ int* bezier(float t, int* p0, int* p1, int* p2, int* p3)
   return res;
 }
 
-// ------------------------------------------------------------------
-// --- DRAWING FUNCTIONS (Kept from Phase 1) ---
-// ------------------------------------------------------------------
+// --- DRAWING FUNCTIONS ---
 
 void drawPlayer(float x, float y, float angle)
 {
@@ -287,7 +269,6 @@ void drawPlayer(float x, float y, float angle)
   glTranslatef(x, y, 0);
   glRotatef(angle, 0, 0, 1);
 
-  // Head/Skin tone
   glColor3f(0.95f, 0.87f, 0.73f);
   glBegin(GL_POLYGON);
   for (int i = 0; i < 20; i++)
@@ -297,7 +278,6 @@ void drawPlayer(float x, float y, float angle)
   }
   glEnd();
 
-  // Hair/Beanie
   glColor3f(0.1f, 0.1f, 0.15f);
   glBegin(GL_POLYGON);
   for (int i = 0; i < 20; i++)
@@ -307,7 +287,6 @@ void drawPlayer(float x, float y, float angle)
   }
   glEnd();
 
-  // Jacket
   glColor3f(0.4f, 0.4f, 0.5f);
   glBegin(GL_POLYGON);
   glVertex2f(-8, 3);
@@ -316,7 +295,6 @@ void drawPlayer(float x, float y, float angle)
   glVertex2f(-10, -8);
   glEnd();
 
-  // Jacket Zipper/Stripe (Romania Blue Accent)
   glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
   glLineWidth(2);
   glBegin(GL_LINES);
@@ -324,7 +302,6 @@ void drawPlayer(float x, float y, float angle)
   glVertex2f(0, -5);
   glEnd();
 
-  // Trousers
   glColor3f(0.2f, 0.2f, 0.25f);
   glBegin(GL_QUADS);
   glVertex2f(-10, -8);
@@ -333,7 +310,6 @@ void drawPlayer(float x, float y, float angle)
   glVertex2f(-8, -15);
   glEnd();
 
-  // Luggage
   glColor3f(0.7f, 0.5f, 0.3f);
   glBegin(GL_QUADS);
   glVertex2f(10, 0);
@@ -342,7 +318,6 @@ void drawPlayer(float x, float y, float angle)
   glVertex2f(10, -10);
   glEnd();
 
-  // Luggage tag (Romania Red)
   glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
   glBegin(GL_QUADS);
   glVertex2f(13, -8);
@@ -351,7 +326,6 @@ void drawPlayer(float x, float y, float angle)
   glVertex2f(13, -6);
   glEnd();
 
-  // Luggage handle (Romania Yellow)
   glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
   glLineWidth(3);
   glBegin(GL_LINE_STRIP);
@@ -359,7 +333,6 @@ void drawPlayer(float x, float y, float angle)
   glVertex2f(13, 3);
   glEnd();
 
-  // Arms
   glColor3f(0.95f, 0.87f, 0.73f);
   glBegin(GL_TRIANGLES);
   glVertex2f(-8, 2);
@@ -367,7 +340,6 @@ void drawPlayer(float x, float y, float angle)
   glVertex2f(-8, -2);
   glEnd();
 
-  // Eyes
   glColor3f(0.0f, 0.0f, 0.0f);
   glPointSize(3);
   glBegin(GL_POINTS);
@@ -383,7 +355,6 @@ void drawPlane(float x, float y)
   glPushMatrix();
   glTranslatef(x, y, 0);
 
-  // Fuselage - white/silver
   glColor3f(0.95f, 0.95f, 0.98f);
   glBegin(GL_POLYGON);
   glVertex2f(-30, -6);
@@ -396,24 +367,19 @@ void drawPlane(float x, float y)
   glVertex2f(-35, -3);
   glEnd();
 
-  // Wings - light gray
   glColor3f(0.85f, 0.85f, 0.88f);
   glBegin(GL_TRIANGLES);
-  // Left wing
   glVertex2f(-20, 0);
   glVertex2f(-35, -18);
   glVertex2f(-10, -18);
-  // Right wing
   glVertex2f(20, 0);
   glVertex2f(35, -18);
   glVertex2f(10, -18);
   glEnd();
 
-  // Tail with Romania flag colors
   float tailWidth = 10;
   float tailHeight = 12;
 
-  // Blue
   glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
   glBegin(GL_QUADS);
   glVertex2f(-30, 0);
@@ -422,7 +388,6 @@ void drawPlane(float x, float y)
   glVertex2f(-30, tailHeight);
   glEnd();
 
-  // Yellow
   glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
   glBegin(GL_QUADS);
   glVertex2f(-30 - tailWidth / 3, 0);
@@ -431,7 +396,6 @@ void drawPlane(float x, float y)
   glVertex2f(-30 - tailWidth / 3, tailHeight);
   glEnd();
 
-  // Red
   glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
   glBegin(GL_QUADS);
   glVertex2f(-30 - 2 * tailWidth / 3, 0);
@@ -440,7 +404,6 @@ void drawPlane(float x, float y)
   glVertex2f(-30 - 2 * tailWidth / 3, tailHeight);
   glEnd();
 
-  // Windows
   glColor3f(0.4f, 0.6f, 0.8f);
   glPointSize(4);
   glBegin(GL_POINTS);
@@ -450,7 +413,6 @@ void drawPlane(float x, float y)
   }
   glEnd();
 
-  // "GATE A01" text
   glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
   glRasterPos2f(-15, -2);
   char gateText[] = "A01";
@@ -467,7 +429,6 @@ void drawGuard(float x, float y)
   glPushMatrix();
   glTranslatef(x, y, 0);
 
-  // Head/Skin tone
   glColor3f(0.95f, 0.87f, 0.73f);
   glBegin(GL_POLYGON);
   for (int i = 0; i < 20; i++)
@@ -477,7 +438,6 @@ void drawGuard(float x, float y)
   }
   glEnd();
 
-  // Security cap with Romania blue
   glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
   glBegin(GL_POLYGON);
   for (int i = 10; i < 30; i++)
@@ -487,7 +447,6 @@ void drawGuard(float x, float y)
   }
   glEnd();
 
-  // Cap visor (darker shade)
   glColor3f(0.1f, 0.1f, 0.2f);
   glBegin(GL_QUADS);
   glVertex2f(-6, 10);
@@ -496,7 +455,6 @@ void drawGuard(float x, float y)
   glVertex2f(-7, 8);
   glEnd();
 
-  // Uniform - dark navy blue/gray
   glColor3f(0.1f, 0.1f, 0.3f);
   glBegin(GL_QUADS);
   glVertex2f(-7, 7);
@@ -505,7 +463,6 @@ void drawGuard(float x, float y)
   glVertex2f(-7, -12);
   glEnd();
 
-  // Tie (Romania Red Accent)
   glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
   glBegin(GL_TRIANGLES);
   glVertex2f(-1, 5);
@@ -513,7 +470,6 @@ void drawGuard(float x, float y)
   glVertex2f(0, 0);
   glEnd();
 
-  // Badge with Romania yellow (Security Star)
   glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
   glBegin(GL_POLYGON);
   for (int i = 0; i < 6; i++)
@@ -523,7 +479,6 @@ void drawGuard(float x, float y)
   }
   glEnd();
 
-  // Arms
   glColor3f(0.95f, 0.87f, 0.73f);
   glBegin(GL_QUADS);
   glVertex2f(-7, 5);
@@ -532,7 +487,6 @@ void drawGuard(float x, float y)
   glVertex2f(-7, -1);
   glEnd();
 
-  // Flashlight/baton
   glColor3f(0.2f, 0.2f, 0.2f);
   glBegin(GL_QUADS);
   glVertex2f(7, 0);
@@ -550,7 +504,6 @@ void drawBoardingPass(float x, float y, float rotation)
   glTranslatef(x, y, 0);
   glRotatef(rotation, 0, 0, 1);
 
-  // Paper background
   glColor3f(1.0f, 0.98f, 0.95f);
   glBegin(GL_QUADS);
   glVertex2f(-10, -6);
@@ -559,7 +512,6 @@ void drawBoardingPass(float x, float y, float rotation)
   glVertex2f(-10, 6);
   glEnd();
 
-  // Tear-off section perforation
   glColor3f(0.7f, 0.7f, 0.7f);
   glLineWidth(1);
   glLineStipple(1, 0xAAAA);
@@ -570,7 +522,6 @@ void drawBoardingPass(float x, float y, float rotation)
   glEnd();
   glDisable(GL_LINE_STIPPLE);
 
-  // Romania flag stripe - top left
   float stripeHeight = 2.0f;
   glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
   glBegin(GL_QUADS);
@@ -596,7 +547,6 @@ void drawBoardingPass(float x, float y, float rotation)
   glVertex2f(-10, 6 - 2 * stripeHeight);
   glEnd();
 
-  // "CLJ" / "OTP" airport code (realistic text)
   glColor3f(0.0f, 0.0f, 0.0f);
   glRasterPos2f(-8, 3);
   char airportCode[] = "CLJ-OTP";
@@ -605,7 +555,6 @@ void drawBoardingPass(float x, float y, float rotation)
     glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, airportCode[i]);
   }
 
-  // Barcode
   glColor3f(0.0f, 0.0f, 0.0f);
   glLineWidth(1);
   glBegin(GL_LINES);
@@ -632,20 +581,9 @@ void drawFriend(float x, float y)
   glPushMatrix();
   glTranslatef(x, y, 0);
 
-  // Head/Skin tone (smaller for petite build)
-  glColor3f(0.92f, 0.84f, 0.70f);
+  // Headscarf covering head and shoulders
+  glColor3f(1.0f, 1.0f, 1.0f);
   glBegin(GL_POLYGON);
-  for (int i = 0; i < 20; i++)
-  {
-    float theta = 2.0f * 3.1415926f * float(i) / 20.0f;
-    glVertex2f(5 * cosf(theta), 10 + 5 * sinf(theta));
-  }
-  glEnd();
-
-  // Headscarf - Modern hijab style (covering head and shoulders)
-  glColor3f(1.0f, 1.0f, 1.0f); // White hijab
-  glBegin(GL_POLYGON);
-  // Main scarf covering head
   glVertex2f(-8, 12);
   glVertex2f(8, 12);
   glVertex2f(10, 2);
@@ -654,8 +592,7 @@ void drawFriend(float x, float y)
   glVertex2f(-10, 2);
   glEnd();
 
-  // Scarf drape on shoulder
-  glColor3f(0.9f, 0.9f, 0.9f); // Slightly off-white for depth
+  glColor3f(0.9f, 0.9f, 0.9f);
   glBegin(GL_POLYGON);
   glVertex2f(-8, -2);
   glVertex2f(8, -2);
@@ -663,8 +600,28 @@ void drawFriend(float x, float y)
   glVertex2f(-6, -8);
   glEnd();
 
-  // Body with modern outfit (smaller for petite build)
-  glColor3f(0.3f, 0.4f, 0.6f); // Modern blue top
+  // FIXED: White circle outline for hijab opening
+  glColor3f(1.0f, 1.0f, 1.0f);
+  glBegin(GL_POLYGON);
+  for (int i = 0; i < 20; i++)
+  {
+    float theta = 2.0f * 3.1415926f * float(i) / 20.0f;
+    glVertex2f(5 * cosf(theta), 8 + 5 * sinf(theta));
+  }
+  glEnd();
+
+  // FIXED: Skin-toned face inside the white circle
+  glColor3f(0.92f, 0.84f, 0.70f);
+  glBegin(GL_POLYGON);
+  for (int i = 0; i < 20; i++)
+  {
+    float theta = 2.0f * 3.1415926f * float(i) / 20.0f;
+    glVertex2f(4 * cosf(theta), 8 + 4 * sinf(theta));
+  }
+  glEnd();
+
+  // Body
+  glColor3f(0.3f, 0.4f, 0.6f);
   glBegin(GL_POLYGON);
   glVertex2f(-8, 2);
   glVertex2f(8, 2);
@@ -672,7 +629,6 @@ void drawFriend(float x, float y)
   glVertex2f(-9, -8);
   glEnd();
 
-  // Pants (modern fit)
   glColor3f(0.2f, 0.2f, 0.3f);
   glBegin(GL_QUADS);
   glVertex2f(-9, -8);
@@ -681,7 +637,6 @@ void drawFriend(float x, float y)
   glVertex2f(-8, -15);
   glEnd();
 
-  // Small backpack
   glColor3f(0.4f, 0.4f, 0.4f);
   glBegin(GL_QUADS);
   glVertex2f(-12, 0);
@@ -690,7 +645,6 @@ void drawFriend(float x, float y)
   glVertex2f(-12, -6);
   glEnd();
 
-  // Backpack straps
   glColor3f(0.2f, 0.2f, 0.2f);
   glLineWidth(2);
   glBegin(GL_LINES);
@@ -700,7 +654,6 @@ void drawFriend(float x, float y)
   glVertex2f(-6, -1);
   glEnd();
 
-  // Arms (smaller for petite build)
   glColor3f(0.92f, 0.84f, 0.70f);
   glBegin(GL_TRIANGLES);
   glVertex2f(8, 1);
@@ -708,32 +661,12 @@ void drawFriend(float x, float y)
   glVertex2f(8, -2);
   glEnd();
 
-  // Face area - White circle (niqab style)
-  glColor3f(1.0f, 1.0f, 1.0f); // Pure white
-  glBegin(GL_POLYGON);
-  for (int i = 0; i < 20; i++)
-  {
-    float theta = 2.0f * 3.1415926f * float(i) / 20.0f;
-    glVertex2f(4 * cosf(theta), 8 + 4 * sinf(theta));
-  }
-  glEnd();
-
-  // Very light skin tone - smaller circle inside
-  glColor3f(0.98f, 0.95f, 0.90f); // Very light skin tone
-  glBegin(GL_POLYGON);
-  for (int i = 0; i < 20; i++)
-  {
-    float theta = 2.0f * 3.1415926f * float(i) / 20.0f;
-    glVertex2f(2.5f * cosf(theta), 8 + 2.5f * sinf(theta));
-  }
-  glEnd();
-
-  // Eyes (small dots)
+  // Eyes
   glColor3f(0.0f, 0.0f, 0.0f);
-  glPointSize(1);
+  glPointSize(2);
   glBegin(GL_POINTS);
-  glVertex2f(-1, 9);
-  glVertex2f(1, 9);
+  glVertex2f(-2, 9);
+  glVertex2f(2, 9);
   glEnd();
 
   glPopMatrix();
@@ -745,7 +678,6 @@ void drawManagerBadge(float x, float y, float scale)
   glTranslatef(x, y, 0);
   glScalef(scale, scale, 1);
 
-  // Badge shape - Romania yellow
   glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
   glBegin(GL_POLYGON);
   for (int i = 0; i < 6; i++)
@@ -755,7 +687,6 @@ void drawManagerBadge(float x, float y, float scale)
   }
   glEnd();
 
-  // Inner circle with Romania Blue
   glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
   glBegin(GL_POLYGON);
   for (int i = 0; i < 20; i++)
@@ -765,7 +696,6 @@ void drawManagerBadge(float x, float y, float scale)
   }
   glEnd();
 
-  // "VIP" text
   glColor3f(1.0f, 1.0f, 1.0f);
   glRasterPos2f(-6, -2);
   char vipText[] = "VIP";
@@ -774,7 +704,6 @@ void drawManagerBadge(float x, float y, float scale)
     glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, vipText[i]);
   }
 
-  // Outer border - Black
   glColor3f(0.0f, 0.0f, 0.0f);
   glLineWidth(2);
   glBegin(GL_LINE_LOOP);
@@ -794,10 +723,8 @@ void drawFastTrackPass(float x, float y, float scale)
   glTranslatef(x, y, 0);
   glScalef(scale, scale, 1);
 
-  // Card - Romania colors: Blue, Yellow, Red stripes
   float stripWidth = 6.6f;
 
-  // Red Stripe
   glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
   glBegin(GL_QUADS);
   glVertex2f(-10, -6);
@@ -806,7 +733,6 @@ void drawFastTrackPass(float x, float y, float scale)
   glVertex2f(-10, 6);
   glEnd();
 
-  // Yellow Stripe
   glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
   glBegin(GL_QUADS);
   glVertex2f(-10 + stripWidth, -6);
@@ -815,7 +741,6 @@ void drawFastTrackPass(float x, float y, float scale)
   glVertex2f(-10 + stripWidth, 6);
   glEnd();
 
-  // Blue Stripe
   glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
   glBegin(GL_QUADS);
   glVertex2f(-10 + 2 * stripWidth, -6);
@@ -824,7 +749,6 @@ void drawFastTrackPass(float x, float y, float scale)
   glVertex2f(-10 + 2 * stripWidth, 6);
   glEnd();
 
-  // Fast forward arrows in White
   glColor3f(1.0f, 1.0f, 1.0f);
   glBegin(GL_TRIANGLES);
   glVertex2f(-6, 0);
@@ -848,7 +772,6 @@ void drawStressIndicator(float x, float y, bool filled)
   glPushMatrix();
   glTranslatef(x, y, 0);
 
-  // Luggage outline
   glColor3f(0.4f, 0.3f, 0.2f);
   glBegin(GL_QUADS);
   glVertex2f(-10, -7);
@@ -857,14 +780,13 @@ void drawStressIndicator(float x, float y, bool filled)
   glVertex2f(-10, 7);
   glEnd();
 
-  // Fill indicator (Green/Red health bar effect)
   if (filled)
   {
-    glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B); // Red when alive
+    glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
   }
   else
   {
-    glColor3f(0.3f, 0.3f, 0.3f); // Gray when lost
+    glColor3f(0.3f, 0.3f, 0.3f);
   }
   glBegin(GL_QUADS);
   glVertex2f(-8, -5);
@@ -873,7 +795,6 @@ void drawStressIndicator(float x, float y, bool filled)
   glVertex2f(-8, 5);
   glEnd();
 
-  // Handle
   glColor3f(0.2f, 0.2f, 0.2f);
   glLineWidth(3);
   glBegin(GL_LINE_STRIP);
@@ -900,14 +821,10 @@ void drawMapBackground() {
     return;
   }
 
-  // Simple approach: Draw the full map texture with camera offset
-  // The camera transformation is already applied in the display function
   glColor3f(1.0f, 1.0f, 1.0f);
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, mapTexture);
   
-  // Draw the full map texture covering the entire game area
-  // The camera offset will move this texture as needed
   glBegin(GL_QUADS);
   glTexCoord2f(0.0f, 1.0f); glVertex2f(0, GAME_AREA_BOTTOM);
   glTexCoord2f(1.0f, 1.0f); glVertex2f(WINDOW_WIDTH, GAME_AREA_BOTTOM);
@@ -918,27 +835,21 @@ void drawMapBackground() {
   glDisable(GL_TEXTURE_2D);
 }
 
-// ------------------------------------------------------------------
-// --- Collision Function Definition (Fixes the 'undeclared identifier' error) ---
-// ------------------------------------------------------------------
 bool checkCollision(float x1, float y1, float w1, float h1,
                     float x2, float y2, float w2, float h2)
 {
   return (x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2);
 }
-// ------------------------------------------------------------------
 
 void handleCollisions()
 {
-  // Debug: Print player position and object positions
   static int debugCounter = 0;
-  if (debugCounter % 60 == 0) { // Print every second
+  if (debugCounter % 60 == 0) {
     printf("DEBUG: Player at (%.1f, %.1f), Friend at (%.1f, %.1f), Collectibles: %zu, Lives: %d, Score: %d\n", 
            playerX, playerY, friendObj.x, friendObj.y, collectibles.size(), lives, score);
   }
   debugCounter++;
 
-  // Check collision with movable obstacles (Guards)
   for (auto &obstacle : obstacles)
   {
     if (obstacle.active && checkCollision(playerX - PLAYER_SIZE / 2, playerY - PLAYER_SIZE / 2,
@@ -950,7 +861,6 @@ void handleCollisions()
       {
         lives--;
         printf("DEBUG: Hit guard! Lives: %d\n", lives);
-        // Simple push-back collision response
         float dx = playerX - obstacle.x;
         float dy = playerY - obstacle.y;
         if (fabs(dx) > fabs(dy))
@@ -965,7 +875,6 @@ void handleCollisions()
     }
   }
 
-  // Collectible collision logic
   for (auto it = collectibles.begin(); it != collectibles.end();)
   {
     if (it->active && checkCollision(playerX - PLAYER_SIZE / 2, playerY - PLAYER_SIZE / 2,
@@ -983,7 +892,6 @@ void handleCollisions()
     }
   }
 
-  // Friend collision
   if (friendObj.active && !friendCollected &&
       checkCollision(playerX - PLAYER_SIZE / 2, playerY - PLAYER_SIZE / 2,
                      PLAYER_SIZE, PLAYER_SIZE,
@@ -996,7 +904,6 @@ void handleCollisions()
     score += 20;
   }
 
-  // Powerup collision
   for (auto it = powerups.begin(); it != powerups.end();)
   {
     if (it->active && checkCollision(playerX - PLAYER_SIZE / 2, playerY - PLAYER_SIZE / 2,
@@ -1025,7 +932,6 @@ void handleCollisions()
     }
   }
 
-  // Check collision with plane on runway
   if (friendCollected && checkCollision(playerX - PLAYER_SIZE / 2, playerY - PLAYER_SIZE / 2,
                                         PLAYER_SIZE, PLAYER_SIZE,
                                         planeX - 30, planeY - 6, 60, 12))
@@ -1037,7 +943,6 @@ void handleCollisions()
 
 void init()
 {
-  // --- Load the Map Texture ---
   printf("DEBUG: Attempting to load texture: cluj-napoca_airport_map.bmp\n");
   mapTexture = loadBMPTexture("./cluj-napoca_airport_map.bmp");
   printf("DEBUG: Texture loaded with ID: %d\n", mapTexture);
@@ -1055,11 +960,9 @@ void init()
   glEnable(GL_TEXTURE_2D);
   glClearColor(0.15f, 0.15f, 0.2f, 1.0f);
 
-  // Reset camera
   cameraOffsetX = 0;
   cameraOffsetY = 0;
   
-  // Set player starting position (bottom of map)
   playerX = 500;
   playerY = 50;
   playerAngle = 0;
@@ -1070,16 +973,11 @@ void init()
   gameTimer = 0;
   friendCollected = false;
 
-  // Set plane position at top of map (runway area)
   planeX = 500;
-  planeY = 450;  // This is now a MAP coordinate, not screen coordinate
+  planeY = 450;
   
-  // Set friend position at the top of the map near the plane
   friendObj = {487, 400, 30, 35, true, 0, 0};
   
-  // Set camera to show player at bottom of map initially
-  // Player is at (500, 50) on map, but we want to show them at screen center (500, 300)
-  // So camera should be offset to show the bottom of the map
   cameraOffsetX = 0;
   cameraOffsetY = 250;
 
@@ -1088,18 +986,14 @@ void init()
   powerups.clear();
 }
 
-// --- Display Function ---
-
 void display()
 {
   glClear(GL_COLOR_BUFFER_BIT);
 
-  // 1. Draw Map Background with camera offset
   glPushMatrix();
   glTranslatef(cameraOffsetX, cameraOffsetY, 0);
   drawMapBackground();
 
-  // 2. Draw Game Objects with camera offset
   for (const auto &obstacle : obstacles)
   {
     if (obstacle.active)
@@ -1136,14 +1030,11 @@ void display()
     drawFriend(friendObj.x, friendObj.y);
   }
 
-  // Draw the plane at its fixed map position (not screen position)
   drawPlane(planeX, planeY);
   
-  // Draw player at center of screen (no camera offset for player)
-  glPopMatrix(); // End camera transformation
+  glPopMatrix();
   drawPlayer(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, playerAngle);
 
-  // 3. TOP PANEL - UI (Remains the same)
   glColor3f(0.1f, 0.1f, 0.15f);
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_QUADS);
@@ -1153,22 +1044,18 @@ void display()
   glVertex2f(0, WINDOW_HEIGHT);
   glEnd();
 
-  // Romania Flag Accent Bar at the top edge
   float flagBarHeight = 10;
   glBegin(GL_QUADS);
-  // Blue
   glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
   glVertex2f(0, WINDOW_HEIGHT - flagBarHeight);
   glVertex2f(WINDOW_WIDTH / 3, WINDOW_HEIGHT - flagBarHeight);
   glVertex2f(WINDOW_WIDTH / 3, WINDOW_HEIGHT);
   glVertex2f(0, WINDOW_HEIGHT);
-  // Yellow
   glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
   glVertex2f(WINDOW_WIDTH / 3, WINDOW_HEIGHT - flagBarHeight);
   glVertex2f(2 * WINDOW_WIDTH / 3, WINDOW_HEIGHT - flagBarHeight);
   glVertex2f(2 * WINDOW_WIDTH / 3, WINDOW_HEIGHT);
   glVertex2f(WINDOW_WIDTH / 3, WINDOW_HEIGHT);
-  // Red
   glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
   glVertex2f(2 * WINDOW_WIDTH / 3, WINDOW_HEIGHT - flagBarHeight);
   glVertex2f(WINDOW_WIDTH, WINDOW_HEIGHT - flagBarHeight);
@@ -1176,13 +1063,11 @@ void display()
   glVertex2f(2 * WINDOW_WIDTH / 3, WINDOW_HEIGHT);
   glEnd();
 
-  // Draw health indicators
   for (int i = 0; i < 5; i++)
   {
     drawStressIndicator(50 + i * 40, WINDOW_HEIGHT - 50, i < lives);
   }
 
-  // Draw score and time with high visibility
   glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
   char scoreText[50];
   sprintf(scoreText, "SCORE: %d", score);
@@ -1192,15 +1077,14 @@ void display()
   sprintf(timeText, "TIME: %d sec", gameTime);
   print(450, WINDOW_HEIGHT - 60, timeText);
 
-  // Friend status
   if (friendCollected)
   {
-    glColor3f(0.0f, 1.0f, 0.0f); // Green for OK
+    glColor3f(0.0f, 1.0f, 0.0f);
     print(650, WINDOW_HEIGHT - 60, (char *)"FRIEND: OK!");
   }
   else
   {
-    glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B); // Red for Missing
+    glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
     print(650, WINDOW_HEIGHT - 60, (char *)"FIND FRIEND!");
   }
 
@@ -1210,7 +1094,6 @@ void display()
     print(350, WINDOW_HEIGHT - 30, (char *)"SETUP: Click objects, press R to start.");
   }
 
-  // Power-up status
   if (invincible)
   {
     glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
@@ -1222,7 +1105,6 @@ void display()
     print(850, WINDOW_HEIGHT - 30, (char *)"FAST!");
   }
 
-  // 4. BOTTOM PANEL - UI (Remains the same)
   glBegin(GL_QUADS);
   glColor3f(0.2f, 0.2f, 0.25f);
   glVertex2f(0, 0);
@@ -1232,66 +1114,96 @@ void display()
   glVertex2f(0, BOTTOM_PANEL_HEIGHT);
   glEnd();
 
-  // Draw template objects
   drawGuard(100, 50);
   drawBoardingPass(250, 50, 0);
   drawManagerBadge(400, 50, 1.0f);
   drawFastTrackPass(550, 50, 1.0f);
 
-  // Labels with Romania colors
   glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
   print(70, 20, (char *)"Guard");
   print(205, 20, (char *)"Boarding Pass");
   print(365, 20, (char *)"VIP Badge");
   print(515, 20, (char *)"Fast Track");
 
-  // Instruction
   glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
   print(700, 50, (char *)"Click Below to Select Item.");
   print(700, 20, (char *)"Click on Map to Place.");
 
-  // Game end screens with centered text and background
+  // FIXED: WIN SCREEN with green-to-black gradient banner
   if (gameState == WIN)
   {
-    // Dark background behind text for better readability
-    glColor3f(0.0f, 0.0f, 0.0f);
+    float bannerLeft = 200;
+    float bannerRight = 800;
+    float bannerBottom = 220;
+    float bannerTop = 380;
+    
+    // Gradient banner (green to black)
     glBegin(GL_QUADS);
-    glVertex2f(180, 240);
-    glVertex2f(820, 240);
-    glVertex2f(820, 360);
-    glVertex2f(180, 360);
+    glColor3f(0.0f, 0.6f, 0.0f); // Dark green
+    glVertex2f(bannerLeft, bannerBottom);
+    glVertex2f(bannerRight, bannerBottom);
+    glColor3f(0.0f, 0.0f, 0.0f); // Black
+    glVertex2f(bannerRight, bannerTop);
+    glVertex2f(bannerLeft, bannerTop);
+    glEnd();
+
+    // Border
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glLineWidth(3);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(bannerLeft, bannerBottom);
+    glVertex2f(bannerRight, bannerBottom);
+    glVertex2f(bannerRight, bannerTop);
+    glVertex2f(bannerLeft, bannerTop);
     glEnd();
 
     // Centered text
     glColor3f(1.0f, 1.0f, 1.0f);
+    print(280, 320, (char *)"BOARDING COMPLETE!");
     char winText[100];
-    sprintf(winText, "BOARDING COMPLETE! Score: %d", score);
-    print(350, 300, winText);
-    print(380, 270, (char *)"You caught your flight to Munich!");
+    sprintf(winText, "Final Score: %d", score);
+    print(360, 280, winText);
+    print(300, 240, (char *)"You both caught your flight to Munich (MUC)!");
   }
+  // FIXED: LOSE SCREEN with red-to-black gradient banner
   else if (gameState == LOSE)
   {
-    // Dark background behind text for better readability
-    glColor3f(0.0f, 0.0f, 0.0f);
+    float bannerLeft = 200;
+    float bannerRight = 800;
+    float bannerBottom = 220;
+    float bannerTop = 380;
+    
+    // Gradient banner (red to black)
     glBegin(GL_QUADS);
-    glVertex2f(180, 240);
-    glVertex2f(820, 240);
-    glVertex2f(820, 360);
-    glVertex2f(180, 360);
+    glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B); // Romania red
+    glVertex2f(bannerLeft, bannerBottom);
+    glVertex2f(bannerRight, bannerBottom);
+    glColor3f(0.0f, 0.0f, 0.0f); // Black
+    glVertex2f(bannerRight, bannerTop);
+    glVertex2f(bannerLeft, bannerTop);
+    glEnd();
+
+    // Border
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glLineWidth(3);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(bannerLeft, bannerBottom);
+    glVertex2f(bannerRight, bannerBottom);
+    glVertex2f(bannerRight, bannerTop);
+    glVertex2f(bannerLeft, bannerTop);
     glEnd();
 
     // Centered text
     glColor3f(1.0f, 1.0f, 1.0f);
+    print(320, 320, (char *)"FLIGHT MISSED!");
     char loseText[100];
-    sprintf(loseText, "FLIGHT MISSED! Score: %d", score);
-    print(400, 300, loseText);
-    print(420, 270, (char *)"Better luck next time!");
+    sprintf(loseText, "Final Score: %d", score);
+    print(360, 280, loseText);
+    print(300, 240, (char *)"Better luck next time with booking your next flight... ERRRR x_x");
   }
 
   glFlush();
 }
-
-// --- Input Functions ---
 
 void timer(int value)
 {
@@ -1331,10 +1243,9 @@ void timer(int value)
     if (bezierT > 1.0f)
       bezierT = 0.0f;
 
-    // Move the plane along the runway using Bezier curve from bezier.cpp
     int *planePos = bezier(bezierT, bezierP0, bezierP1, bezierP2, bezierP3);
     planeX = planePos[0];
-    planeY = planePos[1]; // Keep plane on the runway level (y=450)
+    planeY = planePos[1];
 
     collectibleRotation += 2.0f;
     if (collectibleRotation >= 360.0f)
@@ -1406,35 +1317,32 @@ void keyboard(unsigned char key, int x, int y)
     break;
   }
 
-  // Move camera in opposite direction to create player-centered movement
   cameraOffsetX -= moveX;
   cameraOffsetY -= moveY;
 
-  // Update player's map position (for collision detection)
   playerX += moveX;
   playerY += moveY;
 
-  // Boundary check - prevent player from going outside map boundaries
   float mapLeft = 50.0f;
   float mapRight = 950.0f;
-  float mapTop = 480.0f;  // Allow player to reach the plane area
-  float mapBottom = 30.0f;  // Allow player to go to very bottom
+  float mapTop = 480.0f;
+  float mapBottom = 30.0f;
   
   if (playerX < mapLeft) {
     playerX = mapLeft;
-    cameraOffsetX += moveX; // Cancel camera movement
+    cameraOffsetX += moveX;
   }
   if (playerX > mapRight) {
     playerX = mapRight;
-    cameraOffsetX += moveX; // Cancel camera movement
+    cameraOffsetX += moveX;
   }
   if (playerY < mapBottom) {
     playerY = mapBottom;
-    cameraOffsetY += moveY; // Cancel camera movement
+    cameraOffsetY += moveY;
   }
   if (playerY > mapTop) {
     playerY = mapTop;
-    cameraOffsetY += moveY; // Cancel camera movement
+    cameraOffsetY += moveY;
   }
 }
 
@@ -1465,35 +1373,32 @@ void specialKeys(int key, int x, int y)
     break;
   }
 
-  // Move camera in opposite direction to create player-centered movement
   cameraOffsetX -= moveX;
   cameraOffsetY -= moveY;
 
-  // Update player's map position (for collision detection)
   playerX += moveX;
   playerY += moveY;
 
-  // Boundary check - prevent player from going outside map boundaries
   float mapLeft = 50.0f;
   float mapRight = 950.0f;
-  float mapTop = 480.0f;  // Allow player to reach the plane area
-  float mapBottom = 30.0f;  // Allow player to go to very bottom
+  float mapTop = 480.0f;
+  float mapBottom = 30.0f;
   
   if (playerX < mapLeft) {
     playerX = mapLeft;
-    cameraOffsetX += moveX; // Cancel camera movement
+    cameraOffsetX += moveX;
   }
   if (playerX > mapRight) {
     playerX = mapRight;
-    cameraOffsetX += moveX; // Cancel camera movement
+    cameraOffsetX += moveX;
   }
   if (playerY < mapBottom) {
     playerY = mapBottom;
-    cameraOffsetY += moveY; // Cancel camera movement
+    cameraOffsetY += moveY;
   }
   if (playerY > mapTop) {
     playerY = mapTop;
-    cameraOffsetY += moveY; // Cancel camera movement
+    cameraOffsetY += moveY;
   }
 }
 
@@ -1526,13 +1431,11 @@ void mouse(int button, int state, int x, int y)
 
     if (y >= GAME_AREA_BOTTOM && y <= GAME_AREA_TOP && drawingMode != NONE)
     {
-      // Convert screen coordinates to map coordinates using camera offset
       float mapX = x - cameraOffsetX;
       float mapY = y - cameraOffsetY;
 
       bool canPlace = true;
 
-      // Check against obstacles (using map coordinates)
       for (const auto &obstacle : obstacles)
       {
         if (obstacle.active && checkCollision(mapX - 10, mapY - 10, 20, 20,
