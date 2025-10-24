@@ -3,6 +3,8 @@
 #include <string.h>
 #include <vector>
 #include <algorithm>
+#include <stdlib.h>
+#include <pthread.h>
 #define GL_SILENCE_DEPRECATION
 #include <GLUT/glut.h>
 #include <OpenGL/gl.h>
@@ -235,12 +237,29 @@ float speedBoostTimer = 0;
 float collectibleRotation = 0;
 float conveyorOffset = 0;
 
+// --- AUDIO SYSTEM ---
+bool backgroundMusicPlaying = false;
+bool winMusicPlaying = false;
+pthread_t backgroundMusicThread;
+pthread_t winMusicThread;
+bool shouldStopBackgroundMusic = false;
+bool shouldStopWinMusic = false;
+
 GLuint mapTexture;
 GLuint playerTexture, planeTexture, guardTexture, boardingPassTexture;
 GLuint friendTexture, badgeTexture, fastTrackTexture, luggageTexture, panelTexture;
 
 bool checkCollision(float x1, float y1, float w1, float h1,
                     float x2, float y2, float w2, float h2);
+
+// --- AUDIO FUNCTIONS ---
+void* playBackgroundMusic(void* arg);
+void* playWinMusic(void* arg);
+void startBackgroundMusic();
+void startWinMusic();
+void stopBackgroundMusic();
+void stopWinMusic();
+void cleanupAudio();
 
 void print(int x, int y, char *string)
 {
@@ -807,6 +826,71 @@ void drawStressIndicator(float x, float y, bool filled)
   glPopMatrix();
 }
 
+// --- AUDIO FUNCTION IMPLEMENTATIONS ---
+
+void* playBackgroundMusic(void* arg) {
+    // Play Show Me Love - WizTheMc (background music, no loop)
+    system("afplay \"assets/sounds/Show Me Love - WizTheMc.mp3\" &");
+    backgroundMusicPlaying = true;
+    
+    // Wait for music to finish or stop signal
+    while (!shouldStopBackgroundMusic) {
+        usleep(100000); // Check every 100ms
+    }
+    
+    backgroundMusicPlaying = false;
+    return NULL;
+}
+
+void* playWinMusic(void* arg) {
+    // Play The Stranglers - Golden Brown (win music, infinite loop)
+    winMusicPlaying = true;
+    
+    // Keep playing in loop until stop signal
+    while (!shouldStopWinMusic) {
+        system("afplay \"assets/sounds/The Stranglers - Golden Brown.mp3\"");
+        usleep(100000); // Small delay between loops
+    }
+    
+    winMusicPlaying = false;
+    return NULL;
+}
+
+void startBackgroundMusic() {
+    if (!backgroundMusicPlaying) {
+        shouldStopBackgroundMusic = false;
+        pthread_create(&backgroundMusicThread, NULL, playBackgroundMusic, NULL);
+    }
+}
+
+void startWinMusic() {
+    if (!winMusicPlaying) {
+        shouldStopWinMusic = false;
+        pthread_create(&winMusicThread, NULL, playWinMusic, NULL);
+    }
+}
+
+void stopBackgroundMusic() {
+    if (backgroundMusicPlaying) {
+        shouldStopBackgroundMusic = true;
+        system("pkill -f 'Show Me Love - WizTheMc.mp3'");
+        pthread_join(backgroundMusicThread, NULL);
+    }
+}
+
+void stopWinMusic() {
+    if (winMusicPlaying) {
+        shouldStopWinMusic = true;
+        system("pkill -f 'The Stranglers - Golden Brown.mp3'");
+        pthread_join(winMusicThread, NULL);
+    }
+}
+
+void cleanupAudio() {
+    stopBackgroundMusic();
+    stopWinMusic();
+}
+
 void drawMapBackground() {
   if (mapTexture == 0) {
     printf("DEBUG: mapTexture is 0, using fallback background\n");
@@ -938,6 +1022,9 @@ void handleCollisions()
   {
     printf("DEBUG: Reached plane at (%.1f, %.1f)\n", planeX, planeY);
     gameState = WIN;
+    // Stop background music and start win music
+    stopBackgroundMusic();
+    startWinMusic();
   }
 }
 
@@ -1217,6 +1304,8 @@ void timer(int value)
       if (gameTime <= 0)
       {
         gameState = LOSE;
+        // Stop background music when game is lost
+        stopBackgroundMusic();
       }
     }
 
@@ -1270,6 +1359,8 @@ void timer(int value)
     if (lives <= 0)
     {
       gameState = LOSE;
+      // Stop background music when game is lost
+      stopBackgroundMusic();
     }
   }
 
@@ -1284,6 +1375,8 @@ void keyboard(unsigned char key, int x, int y)
     if (key == 'r' || key == 'R')
     {
       gameState = RUNNING;
+      // Start background music when game begins
+      startBackgroundMusic();
     }
     return;
   }
@@ -1489,5 +1582,8 @@ int main(int argc, char **argv)
   gluOrtho2D(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT);
 
   glutMainLoop();
+  
+  // Cleanup audio when program exits
+  cleanupAudio();
   return 0;
 }
