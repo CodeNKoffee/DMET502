@@ -185,6 +185,10 @@ const int BOTTOM_PANEL_HEIGHT = 100;
 const int GAME_AREA_TOP = WINDOW_HEIGHT - TOP_PANEL_HEIGHT;
 const int GAME_AREA_BOTTOM = BOTTOM_PANEL_HEIGHT;
 
+// --- Add camera variables ---
+float cameraOffsetX = 0;
+float cameraOffsetY = 0;
+
 enum GameState
 {
   SETUP,
@@ -195,7 +199,7 @@ enum GameState
 GameState gameState = SETUP;
 
 // Player
-float playerX = 500, playerY = 120; // Start position near the bottom entrance
+float playerX = 500, playerY = 50; // Start position at the very bottom of the map
 float playerAngle = 0;
 const float PLAYER_SIZE = 20;
 const float PLAYER_SPEED = 3.0f;
@@ -216,7 +220,7 @@ int bezierP3[2] = {500, 450};  // Back to middle
 std::vector<GameObject> obstacles;
 std::vector<GameObject> collectibles;
 std::vector<PowerUp> powerups;
-GameObject friendObj = {700, 300, 30, 35, true, 0, 0}; // Relocated friend for map
+GameObject friendObj = {487, 400, 30, 35, true, 0, 0}; // Friend positioned at top of map
 bool friendCollected = false;
 
 // Game Stats
@@ -871,44 +875,19 @@ void drawMapBackground() {
     return;
   }
 
-  // Zoom factor - this controls how much of the map is visible
-  float zoom = 0.3f; // Smaller values = more zoomed in (shows less of the map)
-  
-  // Calculate which portion of the texture to show
-  float textureWidth = 1920.0f;   // BMP width
-  float textureHeight = 544.0f;   // BMP height
-  
-  // Calculate the visible area of the texture based on zoom
-  float visibleWidth = textureWidth * zoom;
-  float visibleHeight = textureHeight * zoom;
-  
-  // Center the visible area on the player position
-  float centerX = playerX * (textureWidth / WINDOW_WIDTH);  // Convert player X to texture coordinates
-  float centerY = playerY * (textureHeight / (GAME_AREA_TOP - GAME_AREA_BOTTOM));  // Convert player Y to texture coordinates
-  
-  // Calculate texture coordinates for the visible area
-  float texLeft = (centerX - visibleWidth / 2) / textureWidth;
-  float texRight = (centerX + visibleWidth / 2) / textureWidth;
-  float texBottom = (centerY - visibleHeight / 2) / textureHeight;
-  float texTop = (centerY + visibleHeight / 2) / textureHeight;
-  
-  // Clamp texture coordinates to [0, 1]
-  texLeft = std::max(0.0f, std::min(1.0f, texLeft));
-  texRight = std::max(0.0f, std::min(1.0f, texRight));
-  texBottom = std::max(0.0f, std::min(1.0f, texBottom));
-  texTop = std::max(0.0f, std::min(1.0f, texTop));
-
-  // Draw the texture with 180-degree flip and zoom
+  // Simple approach: Draw the full map texture with camera offset
+  // The camera transformation is already applied in the display function
   glColor3f(1.0f, 1.0f, 1.0f);
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, mapTexture);
   
-  // 180-degree flip: swap texture coordinates
+  // Draw the full map texture covering the entire game area
+  // The camera offset will move this texture as needed
   glBegin(GL_QUADS);
-  glTexCoord2f(texRight, texTop); glVertex2f(0, GAME_AREA_BOTTOM);
-  glTexCoord2f(texLeft, texTop); glVertex2f(WINDOW_WIDTH, GAME_AREA_BOTTOM);
-  glTexCoord2f(texLeft, texBottom); glVertex2f(WINDOW_WIDTH, GAME_AREA_TOP);
-  glTexCoord2f(texRight, texBottom); glVertex2f(0, GAME_AREA_TOP);
+  glTexCoord2f(0.0f, 1.0f); glVertex2f(0, GAME_AREA_BOTTOM);
+  glTexCoord2f(1.0f, 1.0f); glVertex2f(WINDOW_WIDTH, GAME_AREA_BOTTOM);
+  glTexCoord2f(1.0f, 0.0f); glVertex2f(WINDOW_WIDTH, GAME_AREA_TOP);
+  glTexCoord2f(0.0f, 0.0f); glVertex2f(0, GAME_AREA_TOP);
   glEnd();
   
   glDisable(GL_TEXTURE_2D);
@@ -926,6 +905,13 @@ bool checkCollision(float x1, float y1, float w1, float h1,
 
 void handleCollisions()
 {
+  // Debug: Print player position and object positions
+  static int debugCounter = 0;
+  if (debugCounter % 60 == 0) { // Print every second
+    printf("DEBUG: Player at (%.1f, %.1f), Friend at (%.1f, %.1f), Collectibles: %zu\n", 
+           playerX, playerY, friendObj.x, friendObj.y, collectibles.size());
+  }
+  debugCounter++;
 
   // Check collision with movable obstacles (Guards)
   for (auto &obstacle : obstacles)
@@ -953,7 +939,7 @@ void handleCollisions()
     }
   }
 
-  // Collectible collision logic remains the same
+  // Collectible collision logic
   for (auto it = collectibles.begin(); it != collectibles.end();)
   {
     if (it->active && checkCollision(playerX - PLAYER_SIZE / 2, playerY - PLAYER_SIZE / 2,
@@ -961,6 +947,7 @@ void handleCollisions()
                                      it->x - it->width / 2, it->y - it->height / 2,
                                      it->width, it->height))
     {
+      printf("DEBUG: Collected item at (%.1f, %.1f)\n", it->x, it->y);
       score += 5;
       it = collectibles.erase(it);
     }
@@ -970,23 +957,27 @@ void handleCollisions()
     }
   }
 
+  // Friend collision
   if (friendObj.active && !friendCollected &&
       checkCollision(playerX - PLAYER_SIZE / 2, playerY - PLAYER_SIZE / 2,
                      PLAYER_SIZE, PLAYER_SIZE,
                      friendObj.x - friendObj.width / 2, friendObj.y - friendObj.height / 2,
                      friendObj.width, friendObj.height))
   {
+    printf("DEBUG: Collected friend at (%.1f, %.1f)\n", friendObj.x, friendObj.y);
     friendCollected = true;
     friendObj.active = false;
     score += 20;
   }
 
+  // Powerup collision
   for (auto it = powerups.begin(); it != powerups.end();)
   {
     if (it->active && checkCollision(playerX - PLAYER_SIZE / 2, playerY - PLAYER_SIZE / 2,
                                      PLAYER_SIZE, PLAYER_SIZE,
                                      it->x - 10, it->y - 10, 20, 20))
     {
+      printf("DEBUG: Collected powerup at (%.1f, %.1f)\n", it->x, it->y);
       if (it->type == 1)
       {
         invincible = true;
@@ -1011,6 +1002,7 @@ void handleCollisions()
                                         PLAYER_SIZE, PLAYER_SIZE,
                                         planeX - 30, planeY - 6, 60, 12))
   {
+    printf("DEBUG: Reached plane at (%.1f, %.1f)\n", planeX, planeY);
     gameState = WIN;
   }
 }
@@ -1035,8 +1027,13 @@ void init()
   glEnable(GL_TEXTURE_2D);
   glClearColor(0.15f, 0.15f, 0.2f, 1.0f);
 
+  // Reset camera
+  cameraOffsetX = 0;
+  cameraOffsetY = 0;
+  
+  // Set player starting position (bottom of map)
   playerX = 500;
-  playerY = 120;
+  playerY = 50;
   playerAngle = 0;
   gameState = SETUP;
   score = 0;
@@ -1044,6 +1041,13 @@ void init()
   gameTime = 60;
   gameTimer = 0;
   friendCollected = false;
+
+  // Set plane position at top of map (runway area)
+  planeX = 500;
+  planeY = 450;  // This is now a MAP coordinate, not screen coordinate
+  
+  // Set friend position at the top of the map near the plane
+  friendObj = {487, 400, 30, 35, true, 0, 0};
 
   obstacles.clear();
   collectibles.clear();
@@ -1056,10 +1060,56 @@ void display()
 {
   glClear(GL_COLOR_BUFFER_BIT);
 
-  // 1. Draw Map Background (First layer in the game area)
+  // 1. Draw Map Background with camera offset
+  glPushMatrix();
+  glTranslatef(cameraOffsetX, cameraOffsetY, 0);
   drawMapBackground();
 
-  // 2. TOP PANEL - UI (Remains the same)
+  // 2. Draw Game Objects with camera offset
+  for (const auto &obstacle : obstacles)
+  {
+    if (obstacle.active)
+    {
+      drawGuard(obstacle.x, obstacle.y);
+    }
+  }
+
+  for (const auto &collectible : collectibles)
+  {
+    if (collectible.active)
+    {
+      drawBoardingPass(collectible.x, collectible.y, collectible.rotation);
+    }
+  }
+
+  for (const auto &powerup : powerups)
+  {
+    if (powerup.active)
+    {
+      if (powerup.type == 1)
+      {
+        drawManagerBadge(powerup.x, powerup.y, powerup.animScale);
+      }
+      else
+      {
+        drawFastTrackPass(powerup.x, powerup.y, powerup.animScale);
+      }
+    }
+  }
+
+  if (friendObj.active && !friendCollected)
+  {
+    drawFriend(friendObj.x, friendObj.y);
+  }
+
+  // Draw the plane at its fixed map position (not screen position)
+  drawPlane(planeX, planeY);
+  
+  // Draw player at center of screen (no camera offset for player)
+  glPopMatrix(); // End camera transformation
+  drawPlayer(playerX, playerY, playerAngle);
+
+  // 3. TOP PANEL - UI (Remains the same)
   glColor3f(0.1f, 0.1f, 0.15f);
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_QUADS);
@@ -1137,48 +1187,6 @@ void display()
     glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
     print(850, WINDOW_HEIGHT - 30, (char *)"FAST!");
   }
-
-  // 3. Draw Game Objects (Over the map)
-
-  for (const auto &obstacle : obstacles)
-  {
-    if (obstacle.active)
-    {
-      drawGuard(obstacle.x, obstacle.y);
-    }
-  }
-
-  for (const auto &collectible : collectibles)
-  {
-    if (collectible.active)
-    {
-      drawBoardingPass(collectible.x, collectible.y, collectible.rotation);
-    }
-  }
-
-  for (const auto &powerup : powerups)
-  {
-    if (powerup.active)
-    {
-      if (powerup.type == 1)
-      {
-        drawManagerBadge(powerup.x, powerup.y, powerup.animScale);
-      }
-      else
-      {
-        drawFastTrackPass(powerup.x, powerup.y, powerup.animScale);
-      }
-    }
-  }
-
-  if (friendObj.active && !friendCollected)
-  {
-    drawFriend(friendObj.x, friendObj.y);
-  }
-
-  drawPlayer(playerX, playerY, playerAngle);
-  // Draw the plane at its current position on the runway
-  drawPlane(planeX, planeY);
 
   // 4. BOTTOM PANEL - UI (Remains the same)
   glBegin(GL_QUADS);
@@ -1339,45 +1347,61 @@ void keyboard(unsigned char key, int x, int y)
   if (gameState != RUNNING)
     return;
 
-  float newX = playerX;
-  float newY = playerY;
+  float moveX = 0, moveY = 0;
 
   switch (key)
   {
   case 'w':
   case 'W':
-    newY -= currentSpeed;  // Fixed: W should move UP (decrease Y in OpenGL)
+    moveY = currentSpeed;
     playerAngle = 90;
     break;
   case 's':
   case 'S':
-    newY += currentSpeed;  // Fixed: S should move DOWN (increase Y in OpenGL)
+    moveY = -currentSpeed;
     playerAngle = 270;
     break;
   case 'a':
   case 'A':
-    newX += currentSpeed;  // Fixed: A should move LEFT (increase X in OpenGL)
+    moveX = -currentSpeed;
     playerAngle = 180;
     break;
   case 'd':
   case 'D':
-    newX -= currentSpeed;  // Fixed: D should move RIGHT (decrease X in OpenGL)
+    moveX = currentSpeed;
     playerAngle = 0;
     break;
   }
 
-  // Boundary check for player movement logic - respect map boundaries
-  // Map boundaries: adjusted to be more reasonable for the airport layout
+  // Move camera in opposite direction to create player-centered movement
+  cameraOffsetX -= moveX;
+  cameraOffsetY -= moveY;
+
+  // Update player's map position (for collision detection)
+  playerX += moveX;
+  playerY += moveY;
+
+  // Boundary check - prevent player from going outside map boundaries
   float mapLeft = 50.0f;
   float mapRight = 950.0f;
-  float mapTop = 500.0f;
-  float mapBottom = 100.0f;
+  float mapTop = 480.0f;  // Allow player to reach the plane area
+  float mapBottom = 30.0f;  // Allow player to go to very bottom
   
-  if (newX >= mapLeft + PLAYER_SIZE / 2 && newX <= mapRight - PLAYER_SIZE / 2 &&
-      newY >= mapBottom + PLAYER_SIZE / 2 && newY <= mapTop - PLAYER_SIZE / 2)
-  {
-    playerX = newX;
-    playerY = newY;
+  if (playerX < mapLeft) {
+    playerX = mapLeft;
+    cameraOffsetX += moveX; // Cancel camera movement
+  }
+  if (playerX > mapRight) {
+    playerX = mapRight;
+    cameraOffsetX += moveX; // Cancel camera movement
+  }
+  if (playerY < mapBottom) {
+    playerY = mapBottom;
+    cameraOffsetY += moveY; // Cancel camera movement
+  }
+  if (playerY > mapTop) {
+    playerY = mapTop;
+    cameraOffsetY += moveY; // Cancel camera movement
   }
 }
 
@@ -1386,41 +1410,57 @@ void specialKeys(int key, int x, int y)
   if (gameState != RUNNING)
     return;
 
-  float newX = playerX;
-  float newY = playerY;
+  float moveX = 0, moveY = 0;
 
   switch (key)
   {
   case GLUT_KEY_UP:
-    newY -= currentSpeed;  // Fixed: UP arrow should move UP (decrease Y in OpenGL)
+    moveY = currentSpeed;
     playerAngle = 90;
     break;
   case GLUT_KEY_DOWN:
-    newY += currentSpeed;  // Fixed: DOWN arrow should move DOWN (increase Y in OpenGL)
+    moveY = -currentSpeed;
     playerAngle = 270;
     break;
   case GLUT_KEY_LEFT:
-    newX += currentSpeed;  // Fixed: LEFT arrow should move LEFT (increase X in OpenGL)
+    moveX = -currentSpeed;
     playerAngle = 180;
     break;
   case GLUT_KEY_RIGHT:
-    newX -= currentSpeed;  // Fixed: RIGHT arrow should move RIGHT (decrease X in OpenGL)
+    moveX = currentSpeed;
     playerAngle = 0;
     break;
   }
 
-  // Boundary check for player movement logic - respect map boundaries
-  // Map boundaries: adjusted to be more reasonable for the airport layout
+  // Move camera in opposite direction to create player-centered movement
+  cameraOffsetX -= moveX;
+  cameraOffsetY -= moveY;
+
+  // Update player's map position (for collision detection)
+  playerX += moveX;
+  playerY += moveY;
+
+  // Boundary check - prevent player from going outside map boundaries
   float mapLeft = 50.0f;
   float mapRight = 950.0f;
-  float mapTop = 500.0f;
-  float mapBottom = 100.0f;
+  float mapTop = 480.0f;  // Allow player to reach the plane area
+  float mapBottom = 30.0f;  // Allow player to go to very bottom
   
-  if (newX >= mapLeft + PLAYER_SIZE / 2 && newX <= mapRight - PLAYER_SIZE / 2 &&
-      newY >= mapBottom + PLAYER_SIZE / 2 && newY <= mapTop - PLAYER_SIZE / 2)
-  {
-    playerX = newX;
-    playerY = newY;
+  if (playerX < mapLeft) {
+    playerX = mapLeft;
+    cameraOffsetX += moveX; // Cancel camera movement
+  }
+  if (playerX > mapRight) {
+    playerX = mapRight;
+    cameraOffsetX += moveX; // Cancel camera movement
+  }
+  if (playerY < mapBottom) {
+    playerY = mapBottom;
+    cameraOffsetY += moveY; // Cancel camera movement
+  }
+  if (playerY > mapTop) {
+    playerY = mapTop;
+    cameraOffsetY += moveY; // Cancel camera movement
   }
 }
 
@@ -1453,13 +1493,16 @@ void mouse(int button, int state, int x, int y)
 
     if (y >= GAME_AREA_BOTTOM && y <= GAME_AREA_TOP && drawingMode != NONE)
     {
+      // Convert screen coordinates to map coordinates using camera offset
+      float mapX = x - cameraOffsetX;
+      float mapY = y - cameraOffsetY;
+
       bool canPlace = true;
 
-      // Check against obstacles to prevent overlapping placement
-
+      // Check against obstacles (using map coordinates)
       for (const auto &obstacle : obstacles)
       {
-        if (obstacle.active && checkCollision(x - 10, y - 10, 20, 20,
+        if (obstacle.active && checkCollision(mapX - 10, mapY - 10, 20, 20,
                                               obstacle.x - obstacle.width / 2, obstacle.y - obstacle.height / 2,
                                               obstacle.width, obstacle.height))
         {
@@ -1468,23 +1511,21 @@ void mouse(int button, int state, int x, int y)
         }
       }
 
-      // ... (Collectible and Powerup overlap checks omitted for brevity but remain in original logic)
-
       if (canPlace)
       {
         switch (drawingMode)
         {
         case OBSTACLE:
-          obstacles.push_back({(float)x, (float)y, 16, 24, true, 0, 0});
+          obstacles.push_back({mapX, mapY, 16, 24, true, 0, 0});
           break;
         case COLLECTIBLE:
-          collectibles.push_back({(float)x, (float)y, 16, 10, true, 0, 0});
+          collectibles.push_back({mapX, mapY, 16, 10, true, 0, 0});
           break;
         case POWERUP1:
-          powerups.push_back({(float)x, (float)y, true, 1.0f, 1});
+          powerups.push_back({mapX, mapY, true, 1.0f, 1});
           break;
         case POWERUP2:
-          powerups.push_back({(float)x, (float)y, true, 1.0f, 2});
+          powerups.push_back({mapX, mapY, true, 1.0f, 2});
           break;
         case NONE:
           break;
