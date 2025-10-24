@@ -869,51 +869,20 @@ void drawMapBackground() {
     return;
   }
 
+  // Draw the texture with 180-degree flip
   glColor3f(1.0f, 1.0f, 1.0f);
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, mapTexture);
-
-  // Zoom factor (adjust as needed)
-  float zoom = 2.0f; // Increase for more zoom
-  float texWidth = WINDOW_WIDTH * zoom;
-  float texHeight = (GAME_AREA_TOP - GAME_AREA_BOTTOM) * zoom;
-
-  // Center texture on player
-  float texLeft = playerX - texWidth / 2;
-  float texRight = playerX + texWidth / 2;
-  float texBottom = playerY - texHeight / 2;
-  float texTop = playerY + texHeight / 2;
-
-  // Texture coordinates (based on BMP dimensions: 1920x544)
-  float texCoordLeft = texLeft / 1920.0f;
-  float texCoordRight = texRight / 1920.0f;
-  float texCoordBottom = texBottom / 544.0f;
-  float texCoordTop = texTop / 544.0f;
-
-  // Clamp texture coordinates to [0, 1]
-  texCoordLeft = std::max(0.0f, std::min(1.0f, texCoordLeft));
-  texCoordRight = std::max(0.0f, std::min(1.0f, texCoordRight));
-  texCoordBottom = std::max(0.0f, std::min(1.0f, texCoordBottom));
-  texCoordTop = std::max(0.0f, std::min(1.0f, texCoordTop));
-
+  
+  // 180-degree flip: swap texture coordinates
   glBegin(GL_QUADS);
-  glTexCoord2f(texCoordLeft, texCoordBottom);
-  glVertex2f(0, GAME_AREA_BOTTOM);
-  glTexCoord2f(texCoordRight, texCoordBottom);
-  glVertex2f(WINDOW_WIDTH, GAME_AREA_BOTTOM);
-  glTexCoord2f(texCoordRight, texCoordTop);
-  glVertex2f(WINDOW_WIDTH, GAME_AREA_TOP);
-  glTexCoord2f(texCoordLeft, texCoordTop);
-  glVertex2f(0, GAME_AREA_TOP);
+  glTexCoord2f(1.0f, 1.0f); glVertex2f(0, GAME_AREA_BOTTOM);
+  glTexCoord2f(0.0f, 1.0f); glVertex2f(WINDOW_WIDTH, GAME_AREA_BOTTOM);
+  glTexCoord2f(0.0f, 0.0f); glVertex2f(WINDOW_WIDTH, GAME_AREA_TOP);
+  glTexCoord2f(1.0f, 0.0f); glVertex2f(0, GAME_AREA_TOP);
   glEnd();
-
+  
   glDisable(GL_TEXTURE_2D);
-
-  // Check for OpenGL errors
-  GLenum err = glGetError();
-  if (err != GL_NO_ERROR) {
-    printf("OpenGL Error in drawMapBackground: %d\n", err);
-  }
 }
 
 // ------------------------------------------------------------------
