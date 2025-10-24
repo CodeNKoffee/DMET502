@@ -201,14 +201,16 @@ const float PLAYER_SIZE = 20;
 const float PLAYER_SPEED = 3.0f;
 float currentSpeed = PLAYER_SPEED;
 
-// Game Target (Gate A01)
-float planeX = 250, planeY = 480; // Adjusted for the top-left gate area on the map
+// Game Target (Plane on Runway)
+// Position the plane at the actual runway coordinates on the airport map
+float planeX = 500, planeY = 450; // Positioned on the runway of the airport map
 float bezierT = 0.0f;
 float bezierSpeed = 0.01f;
-int bezierP0[2] = {200, 480};
-int bezierP1[2] = {300, 480};
-int bezierP2[2] = {300, 480};
-int bezierP3[2] = {200, 480};
+// Bezier curve points for plane movement along the runway (relative to map coordinates)
+int bezierP0[2] = {400, 450};  // Start of runway
+int bezierP1[2] = {500, 450};  // Middle of runway
+int bezierP2[2] = {600, 450};  // End of runway
+int bezierP3[2] = {500, 450};  // Back to middle
 
 // Game Objects
 std::vector<GameObject> obstacles;
@@ -263,11 +265,11 @@ void print(int x, int y, char *string)
   }
 }
 
-int *bezier(float t, int *p0, int *p1, int *p2, int *p3)
+int* bezier(float t, int* p0, int* p1, int* p2, int* p3)
 {
   static int res[2];
-  res[0] = pow((1 - t), 3) * p0[0] + 3 * t * pow((1 - t), 2) * p1[0] + 3 * pow(t, 2) * (1 - t) * p2[0] + pow(t, 3) * p3[0];
-  res[1] = pow((1 - t), 3) * p0[1] + 3 * t * pow((1 - t), 2) * p1[1] + 3 * pow(t, 2) * (1 - t) * p2[1] + pow(t, 3) * p3[1];
+  res[0] = pow((1-t),3)*p0[0]+3*t*pow((1-t),2)*p1[0]+3*pow(t,2)*(1-t)*p2[0]+pow(t,3)*p3[0];
+  res[1] = pow((1-t),3)*p0[1]+3*t*pow((1-t),2)*p1[1]+3*pow(t,2)*(1-t)*p2[1]+pow(t,3)*p3[1];
   return res;
 }
 
@@ -1004,9 +1006,10 @@ void handleCollisions()
     }
   }
 
+  // Check collision with plane on runway
   if (friendCollected && checkCollision(playerX - PLAYER_SIZE / 2, playerY - PLAYER_SIZE / 2,
                                         PLAYER_SIZE, PLAYER_SIZE,
-                                        planeX - 25, planeY - 5, 50, 10))
+                                        planeX - 30, planeY - 6, 60, 12))
   {
     gameState = WIN;
   }
@@ -1174,6 +1177,7 @@ void display()
   }
 
   drawPlayer(playerX, playerY, playerAngle);
+  // Draw the plane at its current position on the runway
   drawPlane(planeX, planeY);
 
   // 4. BOTTOM PANEL - UI (Remains the same)
@@ -1286,8 +1290,10 @@ void timer(int value)
     if (bezierT > 1.0f)
       bezierT = 0.0f;
 
+    // Move the plane along the runway using Bezier curve from bezier.cpp
     int *planePos = bezier(bezierT, bezierP0, bezierP1, bezierP2, bezierP3);
     planeX = planePos[0];
+    planeY = planePos[1]; // Keep plane on the runway level (y=450)
 
     collectibleRotation += 2.0f;
     if (collectibleRotation >= 360.0f)
@@ -1340,29 +1346,35 @@ void keyboard(unsigned char key, int x, int y)
   {
   case 'w':
   case 'W':
-    newY += currentSpeed;
+    newY -= currentSpeed;  // Fixed: W should move UP (decrease Y in OpenGL)
     playerAngle = 90;
     break;
   case 's':
   case 'S':
-    newY -= currentSpeed;
+    newY += currentSpeed;  // Fixed: S should move DOWN (increase Y in OpenGL)
     playerAngle = 270;
     break;
   case 'a':
   case 'A':
-    newX -= currentSpeed;
+    newX += currentSpeed;  // Fixed: A should move LEFT (increase X in OpenGL)
     playerAngle = 180;
     break;
   case 'd':
   case 'D':
-    newX += currentSpeed;
+    newX -= currentSpeed;  // Fixed: D should move RIGHT (decrease X in OpenGL)
     playerAngle = 0;
     break;
   }
 
-  // Boundary check for player movement logic
-  if (newX >= PLAYER_SIZE / 2 && newX <= WINDOW_WIDTH - PLAYER_SIZE / 2 &&
-      newY >= GAME_AREA_BOTTOM + PLAYER_SIZE / 2 && newY <= GAME_AREA_TOP - PLAYER_SIZE / 2)
+  // Boundary check for player movement logic - respect map boundaries
+  // Map boundaries: adjusted to be more reasonable for the airport layout
+  float mapLeft = 50.0f;
+  float mapRight = 950.0f;
+  float mapTop = 500.0f;
+  float mapBottom = 100.0f;
+  
+  if (newX >= mapLeft + PLAYER_SIZE / 2 && newX <= mapRight - PLAYER_SIZE / 2 &&
+      newY >= mapBottom + PLAYER_SIZE / 2 && newY <= mapTop - PLAYER_SIZE / 2)
   {
     playerX = newX;
     playerY = newY;
@@ -1380,26 +1392,32 @@ void specialKeys(int key, int x, int y)
   switch (key)
   {
   case GLUT_KEY_UP:
-    newY += currentSpeed;
+    newY -= currentSpeed;  // Fixed: UP arrow should move UP (decrease Y in OpenGL)
     playerAngle = 90;
     break;
   case GLUT_KEY_DOWN:
-    newY -= currentSpeed;
+    newY += currentSpeed;  // Fixed: DOWN arrow should move DOWN (increase Y in OpenGL)
     playerAngle = 270;
     break;
   case GLUT_KEY_LEFT:
-    newX -= currentSpeed;
+    newX += currentSpeed;  // Fixed: LEFT arrow should move LEFT (increase X in OpenGL)
     playerAngle = 180;
     break;
   case GLUT_KEY_RIGHT:
-    newX += currentSpeed;
+    newX -= currentSpeed;  // Fixed: RIGHT arrow should move RIGHT (decrease X in OpenGL)
     playerAngle = 0;
     break;
   }
 
-  // Boundary check for player movement logic
-  if (newX >= PLAYER_SIZE / 2 && newX <= WINDOW_WIDTH - PLAYER_SIZE / 2 &&
-      newY >= GAME_AREA_BOTTOM + PLAYER_SIZE / 2 && newY <= GAME_AREA_TOP - PLAYER_SIZE / 2)
+  // Boundary check for player movement logic - respect map boundaries
+  // Map boundaries: adjusted to be more reasonable for the airport layout
+  float mapLeft = 50.0f;
+  float mapRight = 950.0f;
+  float mapTop = 500.0f;
+  float mapBottom = 100.0f;
+  
+  if (newX >= mapLeft + PLAYER_SIZE / 2 && newX <= mapRight - PLAYER_SIZE / 2 &&
+      newY >= mapBottom + PLAYER_SIZE / 2 && newY <= mapTop - PLAYER_SIZE / 2)
   {
     playerX = newX;
     playerY = newY;
