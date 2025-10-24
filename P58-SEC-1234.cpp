@@ -908,8 +908,8 @@ void handleCollisions()
   // Debug: Print player position and object positions
   static int debugCounter = 0;
   if (debugCounter % 60 == 0) { // Print every second
-    printf("DEBUG: Player at (%.1f, %.1f), Friend at (%.1f, %.1f), Collectibles: %zu\n", 
-           playerX, playerY, friendObj.x, friendObj.y, collectibles.size());
+    printf("DEBUG: Player at (%.1f, %.1f), Friend at (%.1f, %.1f), Collectibles: %zu, Lives: %d, Score: %d\n", 
+           playerX, playerY, friendObj.x, friendObj.y, collectibles.size(), lives, score);
   }
   debugCounter++;
 
@@ -924,6 +924,7 @@ void handleCollisions()
       if (!invincible)
       {
         lives--;
+        printf("DEBUG: Hit guard! Lives: %d\n", lives);
         // Simple push-back collision response
         float dx = playerX - obstacle.x;
         float dy = playerY - obstacle.y;
@@ -982,12 +983,14 @@ void handleCollisions()
       {
         invincible = true;
         invincibleTimer = 5.0f;
+        printf("DEBUG: Got VIP badge - invincible for 5 seconds!\n");
       }
       else if (it->type == 2)
       {
         speedBoost = true;
         speedBoostTimer = 5.0f;
         currentSpeed = PLAYER_SPEED * 2.0f;
+        printf("DEBUG: Got fast track - speed boost for 5 seconds!\n");
       }
       it = powerups.erase(it);
     }
@@ -1048,6 +1051,12 @@ void init()
   
   // Set friend position at the top of the map near the plane
   friendObj = {487, 400, 30, 35, true, 0, 0};
+  
+  // Set camera to show player at bottom of map initially
+  // Player is at (500, 50) on map, but we want to show them at screen center (500, 300)
+  // So camera should be offset to show the bottom of the map
+  cameraOffsetX = 0;
+  cameraOffsetY = 250;
 
   obstacles.clear();
   collectibles.clear();
@@ -1107,7 +1116,7 @@ void display()
   
   // Draw player at center of screen (no camera offset for player)
   glPopMatrix(); // End camera transformation
-  drawPlayer(playerX, playerY, playerAngle);
+  drawPlayer(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, playerAngle);
 
   // 3. TOP PANEL - UI (Remains the same)
   glColor3f(0.1f, 0.1f, 0.15f);
