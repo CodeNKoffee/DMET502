@@ -869,17 +869,44 @@ void drawMapBackground() {
     return;
   }
 
-  // Draw the texture with 180-degree flip
+  // Zoom factor - this controls how much of the map is visible
+  float zoom = 0.3f; // Smaller values = more zoomed in (shows less of the map)
+  
+  // Calculate which portion of the texture to show
+  float textureWidth = 1920.0f;   // BMP width
+  float textureHeight = 544.0f;   // BMP height
+  
+  // Calculate the visible area of the texture based on zoom
+  float visibleWidth = textureWidth * zoom;
+  float visibleHeight = textureHeight * zoom;
+  
+  // Center the visible area on the player position
+  float centerX = playerX * (textureWidth / WINDOW_WIDTH);  // Convert player X to texture coordinates
+  float centerY = playerY * (textureHeight / (GAME_AREA_TOP - GAME_AREA_BOTTOM));  // Convert player Y to texture coordinates
+  
+  // Calculate texture coordinates for the visible area
+  float texLeft = (centerX - visibleWidth / 2) / textureWidth;
+  float texRight = (centerX + visibleWidth / 2) / textureWidth;
+  float texBottom = (centerY - visibleHeight / 2) / textureHeight;
+  float texTop = (centerY + visibleHeight / 2) / textureHeight;
+  
+  // Clamp texture coordinates to [0, 1]
+  texLeft = std::max(0.0f, std::min(1.0f, texLeft));
+  texRight = std::max(0.0f, std::min(1.0f, texRight));
+  texBottom = std::max(0.0f, std::min(1.0f, texBottom));
+  texTop = std::max(0.0f, std::min(1.0f, texTop));
+
+  // Draw the texture with 180-degree flip and zoom
   glColor3f(1.0f, 1.0f, 1.0f);
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, mapTexture);
   
   // 180-degree flip: swap texture coordinates
   glBegin(GL_QUADS);
-  glTexCoord2f(1.0f, 1.0f); glVertex2f(0, GAME_AREA_BOTTOM);
-  glTexCoord2f(0.0f, 1.0f); glVertex2f(WINDOW_WIDTH, GAME_AREA_BOTTOM);
-  glTexCoord2f(0.0f, 0.0f); glVertex2f(WINDOW_WIDTH, GAME_AREA_TOP);
-  glTexCoord2f(1.0f, 0.0f); glVertex2f(0, GAME_AREA_TOP);
+  glTexCoord2f(texRight, texTop); glVertex2f(0, GAME_AREA_BOTTOM);
+  glTexCoord2f(texLeft, texTop); glVertex2f(WINDOW_WIDTH, GAME_AREA_BOTTOM);
+  glTexCoord2f(texLeft, texBottom); glVertex2f(WINDOW_WIDTH, GAME_AREA_TOP);
+  glTexCoord2f(texRight, texBottom); glVertex2f(0, GAME_AREA_TOP);
   glEnd();
   
   glDisable(GL_TEXTURE_2D);
