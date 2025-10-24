@@ -1228,19 +1228,6 @@ void display()
   // Game end screens with centered text and background
   if (gameState == WIN)
   {
-    // Background with Romania flag colors
-    glBegin(GL_QUADS);
-    glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
-    glVertex2f(200, 250);
-    glVertex2f(800, 250);
-    glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
-    glVertex2f(800, 300);
-    glVertex2f(200, 300);
-    glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
-    glVertex2f(800, 350);
-    glVertex2f(200, 350);
-    glEnd();
-
     // Dark background behind text for better readability
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_QUADS);
@@ -1259,19 +1246,6 @@ void display()
   }
   else if (gameState == LOSE)
   {
-    // Background with Romania flag colors
-    glBegin(GL_QUADS);
-    glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
-    glVertex2f(200, 250);
-    glVertex2f(800, 250);
-    glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
-    glVertex2f(800, 300);
-    glVertex2f(200, 300);
-    glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
-    glVertex2f(800, 350);
-    glVertex2f(200, 350);
-    glEnd();
-
     // Dark background behind text for better readability
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_QUADS);
