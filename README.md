@@ -150,7 +150,7 @@ This game recreates our actual experience:
 | **Collection sound** | ✅ Sound effects for collecting objects (implicit in music system) | **COMPLETE** |
 | **Obstacle collision sound** | ✅ Audio feedback for hitting guards | **COMPLETE** |
 | **Game win sound** | ✅ "Golden Brown" + "Takeoff Sound" play simultaneously on win | **COMPLETE** |
-| **Game loss sound** | ✅ "Brazilian Phonk Remix" plays on loss | **COMPLETE** |
+| **Game loss sound** | ✅ "Made in Romania - Brazilian Phonk Remix" plays on loss | **COMPLETE** |
 
 #### **Texture System (FULL BONUS)**
 
