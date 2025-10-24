@@ -1195,11 +1195,11 @@ void display()
 
     // Centered text
     glColor3f(1.0f, 1.0f, 1.0f);
-    print(320, 320, (char *)"FLIGHT MISSED!");
+    print(410, 320, (char *)"FLIGHT MISSED!");
     char loseText[100];
     sprintf(loseText, "Final Score: %d", score);
-    print(360, 280, loseText);
-    print(300, 240, (char *)"Better luck next time with booking your next flight... ERRRR x_x");
+    print(432, 280, loseText);
+    print(227, 240, (char *)"Better luck with booking your next flight... ERRRR x_x");
   }
 
   glFlush();
