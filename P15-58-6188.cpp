@@ -251,6 +251,13 @@ bool shouldStopWinMusic = false;
 bool shouldStopLoseMusic = false;
 bool shouldStopTakeoffSound = false;
 
+// Audio fallback flags
+bool audioAssetsAvailable = true;
+bool backgroundMusicAvailable = true;
+bool winMusicAvailable = true;
+bool loseMusicAvailable = true;
+bool takeoffSoundAvailable = true;
+
 GLuint mapTexture;
 GLuint playerTexture, planeTexture, guardTexture, boardingPassTexture;
 GLuint friendTexture, badgeTexture, fastTrackTexture, luggageTexture, panelTexture;
@@ -259,7 +266,7 @@ bool checkCollision(float x1, float y1, float w1, float h1,
                     float x2, float y2, float w2, float h2);
 bool wouldCollideWithObstacle(float newX, float newY);
 
-// --- AUDIO FUNCTIONS ---
+// --- AUDIO FUNCTIONS ---g
 void* playBackgroundMusic(void* arg);
 void* playWinMusic(void* arg);
 void* playLoseMusic(void* arg);
@@ -273,6 +280,7 @@ void stopWinMusic();
 void stopLoseMusic();
 void stopTakeoffSound();
 void cleanupAudio();
+bool checkAudioAssets();
 
 void print(int x, int y, char *string)
 {
@@ -842,6 +850,19 @@ void drawStressIndicator(float x, float y, bool filled)
 // --- AUDIO FUNCTION IMPLEMENTATIONS ---
 
 void* playBackgroundMusic(void* arg) {
+    if (!backgroundMusicAvailable) {
+        printf("DEBUG: Background music not available - running silently\n");
+        backgroundMusicPlaying = true;
+        
+        // Wait for stop signal without playing anything
+        while (!shouldStopBackgroundMusic) {
+            usleep(100000); // Check every 100ms
+        }
+        
+        backgroundMusicPlaying = false;
+        return NULL;
+    }
+    
     // Play Show Me Love - WizTheMc (background music, no loop)
     system("afplay \"assets/sounds/Show Me Love - WizTheMc.mp3\" &");
     backgroundMusicPlaying = true;
@@ -856,9 +877,21 @@ void* playBackgroundMusic(void* arg) {
 }
 
 void* playWinMusic(void* arg) {
-    // Play The Stranglers - Golden Brown (win music, infinite loop)
     winMusicPlaying = true;
     
+    if (!winMusicAvailable) {
+        printf("DEBUG: Win music not available - running silently\n");
+        
+        // Wait for stop signal without playing anything
+        while (!shouldStopWinMusic) {
+            usleep(100000); // Check every 100ms
+        }
+        
+        winMusicPlaying = false;
+        return NULL;
+    }
+    
+    // Play The Stranglers - Golden Brown (win music, infinite loop)
     // Start the first song in background for immediate playback
     system("afplay \"assets/sounds/The Stranglers - Golden Brown.mp3\" &");
     
@@ -887,9 +920,21 @@ void* playWinMusic(void* arg) {
 }
 
 void* playLoseMusic(void* arg) {
-    // Play Brazilian Phonk Remix - SoundSorcerer (lose music, infinite loop)
     loseMusicPlaying = true;
     
+    if (!loseMusicAvailable) {
+        printf("DEBUG: Lose music not available - running silently\n");
+        
+        // Wait for stop signal without playing anything
+        while (!shouldStopLoseMusic) {
+            usleep(100000); // Check every 100ms
+        }
+        
+        loseMusicPlaying = false;
+        return NULL;
+    }
+    
+    // Play Brazilian Phonk Remix - SoundSorcerer (lose music, infinite loop)
     // Keep playing in loop until stop signal
     while (!shouldStopLoseMusic) {
         system("afplay \"assets/sounds/Brazilian Phonk Remix - SoundSorcerer.mp3\"");
@@ -901,9 +946,19 @@ void* playLoseMusic(void* arg) {
 }
 
 void* playTakeoffSound(void* arg) {
-    // Play IndiGo-TakeOff-AirBus-320.mp3 (takeoff sound, play once)
     takeoffSoundPlaying = true;
     
+    if (!takeoffSoundAvailable) {
+        printf("DEBUG: Takeoff sound not available - running silently\n");
+        
+        // Wait a short time to simulate sound duration
+        usleep(2000000); // 2 seconds
+        
+        takeoffSoundPlaying = false;
+        return NULL;
+    }
+    
+    // Play IndiGo-TakeOff-AirBus-320.mp3 (takeoff sound, play once)
     // Play the takeoff sound once and wait for it to complete
     system("afplay \"assets/sounds/IndiGo-TakeOff-AirBus-320.mp3\"");
     
@@ -977,6 +1032,61 @@ void cleanupAudio() {
     stopWinMusic();
     stopLoseMusic();
     stopTakeoffSound();
+}
+
+bool checkAudioAssets() {
+    printf("DEBUG: Checking audio assets availability...\n");
+    
+    // Check if assets directory exists
+    FILE* testFile = fopen("assets/sounds/Show Me Love - WizTheMc.mp3", "rb");
+    if (testFile) {
+        fclose(testFile);
+        backgroundMusicAvailable = true;
+        printf("DEBUG: Background music available\n");
+    } else {
+        backgroundMusicAvailable = false;
+        printf("WARNING: Background music not available - will run silently\n");
+    }
+    
+    testFile = fopen("assets/sounds/The Stranglers - Golden Brown.mp3", "rb");
+    if (testFile) {
+        fclose(testFile);
+        winMusicAvailable = true;
+        printf("DEBUG: Win music available\n");
+    } else {
+        winMusicAvailable = false;
+        printf("WARNING: Win music not available - will run silently\n");
+    }
+    
+    testFile = fopen("assets/sounds/Brazilian Phonk Remix - SoundSorcerer.mp3", "rb");
+    if (testFile) {
+        fclose(testFile);
+        loseMusicAvailable = true;
+        printf("DEBUG: Lose music available\n");
+    } else {
+        loseMusicAvailable = false;
+        printf("WARNING: Lose music not available - will run silently\n");
+    }
+    
+    testFile = fopen("assets/sounds/IndiGo-TakeOff-AirBus-320.mp3", "rb");
+    if (testFile) {
+        fclose(testFile);
+        takeoffSoundAvailable = true;
+        printf("DEBUG: Takeoff sound available\n");
+    } else {
+        takeoffSoundAvailable = false;
+        printf("WARNING: Takeoff sound not available - will run silently\n");
+    }
+    
+    audioAssetsAvailable = backgroundMusicAvailable || winMusicAvailable || loseMusicAvailable || takeoffSoundAvailable;
+    
+    if (!audioAssetsAvailable) {
+        printf("INFO: No audio assets found - game will run in silent mode\n");
+    } else {
+        printf("INFO: Some audio assets available - partial audio mode\n");
+    }
+    
+    return audioAssetsAvailable;
 }
 
 void drawMapBackground() {
@@ -1134,6 +1244,9 @@ void init()
   printf("DEBUG: Attempting to load texture: cluj-napoca_airport_map.bmp\n");
   mapTexture = loadBMPTexture("./assets/images/cluj-napoca_airport_map.bmp");
   printf("DEBUG: Texture loaded with ID: %d\n", mapTexture);
+  
+  // Check audio assets availability
+  checkAudioAssets();
 
   playerTexture = createColorTexture(0.8f, 0.6f, 0.4f);
   planeTexture = createColorTexture(0.9f, 0.9f, 0.9f);
@@ -1291,6 +1404,18 @@ void display()
   {
     glColor3f(ROMANIA_BLUE_R, ROMANIA_BLUE_G, ROMANIA_BLUE_B);
     print(850, WINDOW_HEIGHT - 30, (char *)"FAST!");
+  }
+  
+  // Audio status indicator
+  if (!audioAssetsAvailable)
+  {
+    glColor3f(0.5f, 0.5f, 0.5f);
+    print(50, WINDOW_HEIGHT - 30, (char *)"🔇 SILENT MODE");
+  }
+  else if (!backgroundMusicAvailable || !winMusicAvailable || !loseMusicAvailable || !takeoffSoundAvailable)
+  {
+    glColor3f(0.8f, 0.6f, 0.0f);
+    print(50, WINDOW_HEIGHT - 30, (char *)"🔊 PARTIAL AUDIO");
   }
 
   glBegin(GL_QUADS);

@@ -192,13 +192,13 @@ This game recreates our actual experience:
 ### Compilation
 
 ```bash
-g++ -o airport_rush P58-SEC-1234.cpp -framework GLUT -framework OpenGL
+g++ -o airport_rush P15-58-6188.cpp -framework GLUT -framework OpenGL -lpthread
 ./airport_rush 2>&1 | head -80
 ```
 
 ### Key Features
 
-- **Single File**: All code in P15-58-6188.cpp (1773 lines)
+- **Single File**: All code in P15-58-6188.cpp (1898 lines)
 - **OpenGL/GLUT**: Pure OpenGL implementation
 - **Multi-threading**: Audio system with pthread
 - **Bézier Curves**: Smooth plane animation
