@@ -240,10 +240,13 @@ float conveyorOffset = 0;
 // --- AUDIO SYSTEM ---
 bool backgroundMusicPlaying = false;
 bool winMusicPlaying = false;
+bool loseMusicPlaying = false;
 pthread_t backgroundMusicThread;
 pthread_t winMusicThread;
+pthread_t loseMusicThread;
 bool shouldStopBackgroundMusic = false;
 bool shouldStopWinMusic = false;
+bool shouldStopLoseMusic = false;
 
 GLuint mapTexture;
 GLuint playerTexture, planeTexture, guardTexture, boardingPassTexture;
@@ -255,10 +258,13 @@ bool checkCollision(float x1, float y1, float w1, float h1,
 // --- AUDIO FUNCTIONS ---
 void* playBackgroundMusic(void* arg);
 void* playWinMusic(void* arg);
+void* playLoseMusic(void* arg);
 void startBackgroundMusic();
 void startWinMusic();
+void startLoseMusic();
 void stopBackgroundMusic();
 void stopWinMusic();
+void stopLoseMusic();
 void cleanupAudio();
 
 void print(int x, int y, char *string)
@@ -568,7 +574,7 @@ void drawBoardingPass(float x, float y, float rotation)
 
   glColor3f(0.0f, 0.0f, 0.0f);
   glRasterPos2f(-8, 3);
-  char airportCode[] = "CLJ-OTP";
+  char airportCode[] = "CLJ-MUC";
   for (int i = 0; i < 7; i++)
   {
     glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, airportCode[i]);
@@ -856,6 +862,20 @@ void* playWinMusic(void* arg) {
     return NULL;
 }
 
+void* playLoseMusic(void* arg) {
+    // Play Brazilian Phonk Remix - SoundSorcerer (lose music, infinite loop)
+    loseMusicPlaying = true;
+    
+    // Keep playing in loop until stop signal
+    while (!shouldStopLoseMusic) {
+        system("afplay \"assets/sounds/Brazilian Phonk Remix - SoundSorcerer.mp3\"");
+        usleep(100000); // Small delay between loops
+    }
+    
+    loseMusicPlaying = false;
+    return NULL;
+}
+
 void startBackgroundMusic() {
     if (!backgroundMusicPlaying) {
         shouldStopBackgroundMusic = false;
@@ -867,6 +887,13 @@ void startWinMusic() {
     if (!winMusicPlaying) {
         shouldStopWinMusic = false;
         pthread_create(&winMusicThread, NULL, playWinMusic, NULL);
+    }
+}
+
+void startLoseMusic() {
+    if (!loseMusicPlaying) {
+        shouldStopLoseMusic = false;
+        pthread_create(&loseMusicThread, NULL, playLoseMusic, NULL);
     }
 }
 
@@ -886,9 +913,18 @@ void stopWinMusic() {
     }
 }
 
+void stopLoseMusic() {
+    if (loseMusicPlaying) {
+        shouldStopLoseMusic = true;
+        system("pkill -f 'Brazilian Phonk Remix - SoundSorcerer.mp3'");
+        pthread_join(loseMusicThread, NULL);
+    }
+}
+
 void cleanupAudio() {
     stopBackgroundMusic();
     stopWinMusic();
+    stopLoseMusic();
 }
 
 void drawMapBackground() {
@@ -1251,6 +1287,7 @@ void display()
     sprintf(winText, "Final Score: %d", score);
     print(430, 280, winText);
     print(270, 240, (char *)"You both caught your flight to Munich (MUC)!");
+    print(400, 200, (char *)"Press R to play again!");
   }
   // FIXED: LOSE SCREEN with red-to-black gradient banner
   else if (gameState == LOSE)
@@ -1287,6 +1324,7 @@ void display()
     sprintf(loseText, "Final Score: %d", score);
     print(432, 280, loseText);
     print(227, 240, (char *)"Better luck with booking your next flight... ERRRR x_x");
+    print(400, 200, (char *)"Press R to play again!");
   }
 
   glFlush();
@@ -1304,8 +1342,9 @@ void timer(int value)
       if (gameTime <= 0)
       {
         gameState = LOSE;
-        // Stop background music when game is lost
+        // Stop background music and start lose music when game is lost
         stopBackgroundMusic();
+        startLoseMusic();
       }
     }
 
@@ -1359,8 +1398,9 @@ void timer(int value)
     if (lives <= 0)
     {
       gameState = LOSE;
-      // Stop background music when game is lost
+      // Stop background music and start lose music when game is lost
       stopBackgroundMusic();
+      startLoseMusic();
     }
   }
 
@@ -1377,6 +1417,59 @@ void keyboard(unsigned char key, int x, int y)
       gameState = RUNNING;
       // Start background music when game begins
       startBackgroundMusic();
+    }
+    return;
+  }
+
+  // Reset game when in WIN or LOSE state
+  if (gameState == WIN || gameState == LOSE)
+  {
+    if (key == 'r' || key == 'R')
+    {
+      // Stop any playing music
+      cleanupAudio();
+      
+      // Reset game state
+      gameState = SETUP;
+      score = 0;
+      lives = 5;
+      gameTime = 60;
+      gameTimer = 0;
+      friendCollected = false;
+      
+      // Reset player position
+      playerX = 500;
+      playerY = 50;
+      playerAngle = 0;
+      currentSpeed = PLAYER_SPEED;
+      
+      // Reset camera
+      cameraOffsetX = 0;
+      cameraOffsetY = 250;
+      
+      // Reset plane position
+      planeX = 500;
+      planeY = 450;
+      bezierT = 0.0f;
+      
+      // Reset friend object
+      friendObj = {487, 400, 30, 35, true, 0, 0};
+      
+      // Clear all game objects
+      obstacles.clear();
+      collectibles.clear();
+      powerups.clear();
+      
+      // Reset power-up states
+      invincible = false;
+      invincibleTimer = 0;
+      speedBoost = false;
+      speedBoostTimer = 0;
+      
+      // Reset drawing mode
+      drawingMode = NONE;
+      
+      printf("DEBUG: Game reset! Press R to start again.\n");
     }
     return;
   }
