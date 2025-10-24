@@ -241,12 +241,15 @@ float conveyorOffset = 0;
 bool backgroundMusicPlaying = false;
 bool winMusicPlaying = false;
 bool loseMusicPlaying = false;
+bool takeoffSoundPlaying = false;
 pthread_t backgroundMusicThread;
 pthread_t winMusicThread;
 pthread_t loseMusicThread;
+pthread_t takeoffSoundThread;
 bool shouldStopBackgroundMusic = false;
 bool shouldStopWinMusic = false;
 bool shouldStopLoseMusic = false;
+bool shouldStopTakeoffSound = false;
 
 GLuint mapTexture;
 GLuint playerTexture, planeTexture, guardTexture, boardingPassTexture;
@@ -259,12 +262,15 @@ bool checkCollision(float x1, float y1, float w1, float h1,
 void* playBackgroundMusic(void* arg);
 void* playWinMusic(void* arg);
 void* playLoseMusic(void* arg);
+void* playTakeoffSound(void* arg);
 void startBackgroundMusic();
 void startWinMusic();
 void startLoseMusic();
+void startTakeoffSound();
 void stopBackgroundMusic();
 void stopWinMusic();
 void stopLoseMusic();
+void stopTakeoffSound();
 void cleanupAudio();
 
 void print(int x, int y, char *string)
@@ -854,8 +860,12 @@ void* playWinMusic(void* arg) {
     
     // Keep playing in loop until stop signal
     while (!shouldStopWinMusic) {
-        system("afplay \"assets/sounds/The Stranglers - Golden Brown.mp3\"");
-        usleep(100000); // Small delay between loops
+        // Use background afplay (&) for immediate looping without blocking
+        system("afplay \"assets/sounds/The Stranglers - Golden Brown.mp3\" &");
+        
+        // Wait for the song to finish (approximately 3 minutes for Golden Brown)
+        // This allows the takeoff sound to play in parallel during the first loop
+        usleep(100000); // 3 minutes in microseconds
     }
     
     winMusicPlaying = false;
@@ -873,6 +883,18 @@ void* playLoseMusic(void* arg) {
     }
     
     loseMusicPlaying = false;
+    return NULL;
+}
+
+void* playTakeoffSound(void* arg) {
+    // Play IndiGo-TakeOff-AirBus-320.mp3 (takeoff sound, play once)
+    takeoffSoundPlaying = true;
+    
+    // Play the takeoff sound once and wait for it to complete
+    system("afplay \"assets/sounds/IndiGo-TakeOff-AirBus-320.mp3\"");
+    
+    // Sound finished playing
+    takeoffSoundPlaying = false;
     return NULL;
 }
 
@@ -894,6 +916,13 @@ void startLoseMusic() {
     if (!loseMusicPlaying) {
         shouldStopLoseMusic = false;
         pthread_create(&loseMusicThread, NULL, playLoseMusic, NULL);
+    }
+}
+
+void startTakeoffSound() {
+    if (!takeoffSoundPlaying) {
+        shouldStopTakeoffSound = false;
+        pthread_create(&takeoffSoundThread, NULL, playTakeoffSound, NULL);
     }
 }
 
@@ -921,10 +950,19 @@ void stopLoseMusic() {
     }
 }
 
+void stopTakeoffSound() {
+    if (takeoffSoundPlaying) {
+        shouldStopTakeoffSound = true;
+        system("pkill -f 'IndiGo-TakeOff-AirBus-320.mp3'");
+        pthread_join(takeoffSoundThread, NULL);
+    }
+}
+
 void cleanupAudio() {
     stopBackgroundMusic();
     stopWinMusic();
     stopLoseMusic();
+    stopTakeoffSound();
 }
 
 void drawMapBackground() {
@@ -1058,9 +1096,10 @@ void handleCollisions()
   {
     printf("DEBUG: Reached plane at (%.1f, %.1f)\n", planeX, planeY);
     gameState = WIN;
-    // Stop background music and start win music
+    // Stop background music and start both win sounds simultaneously
     stopBackgroundMusic();
-    startWinMusic();
+    startWinMusic();        // The Stranglers - Golden Brown (loops continuously)
+    startTakeoffSound();    // IndiGo-TakeOff-AirBus-320 (plays once at the same time)
   }
 }
 
