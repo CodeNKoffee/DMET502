@@ -1159,11 +1159,11 @@ void display()
 
     // Centered text
     glColor3f(1.0f, 1.0f, 1.0f);
-    print(280, 320, (char *)"BOARDING COMPLETE!");
+    print(360, 320, (char *)"BOARDING COMPLETE!");
     char winText[100];
     sprintf(winText, "Final Score: %d", score);
-    print(360, 280, winText);
-    print(300, 240, (char *)"You both caught your flight to Munich (MUC)!");
+    print(430, 280, winText);
+    print(270, 240, (char *)"You both caught your flight to Munich (MUC)!");
   }
   // FIXED: LOSE SCREEN with red-to-black gradient banner
   else if (gameState == LOSE)
