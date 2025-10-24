@@ -858,14 +858,20 @@ void* playWinMusic(void* arg) {
     // Play The Stranglers - Golden Brown (win music, infinite loop)
     winMusicPlaying = true;
     
+    // Start the first song in background for immediate playback
+    system("afplay \"assets/sounds/The Stranglers - Golden Brown.mp3\" &");
+    
+    // Wait a bit for the first song to start, then switch to proper looping
+    usleep(500000); // 0.5 second delay to let first song start
+    
     // Keep playing in loop until stop signal
     while (!shouldStopWinMusic) {
-        // Use background afplay (&) for immediate looping without blocking
-        system("afplay \"assets/sounds/The Stranglers - Golden Brown.mp3\" &");
+        // Play the song and wait for it to complete (blocking)
+        // This ensures proper looping without conflicts
+        system("afplay \"assets/sounds/The Stranglers - Golden Brown.mp3\"");
         
-        // Wait for the song to finish (approximately 3 minutes for Golden Brown)
-        // This allows the takeoff sound to play in parallel during the first loop
-        usleep(100000); // 3 minutes in microseconds
+        // Small delay between loops to prevent rapid restarting
+        usleep(100000); // 0.1 second delay
     }
     
     winMusicPlaying = false;
