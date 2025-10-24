@@ -257,6 +257,7 @@ GLuint friendTexture, badgeTexture, fastTrackTexture, luggageTexture, panelTextu
 
 bool checkCollision(float x1, float y1, float w1, float h1,
                     float x2, float y2, float w2, float h2);
+bool wouldCollideWithObstacle(float newX, float newY);
 
 // --- AUDIO FUNCTIONS ---
 void* playBackgroundMusic(void* arg);
@@ -1012,6 +1013,27 @@ bool checkCollision(float x1, float y1, float w1, float h1,
   return (x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2);
 }
 
+bool wouldCollideWithObstacle(float newX, float newY)
+{
+  // If invincible (VIP badge), can pass through guards
+  if (invincible) {
+    return false;
+  }
+  
+  // Check if the new position would collide with any active obstacle
+  for (const auto &obstacle : obstacles)
+  {
+    if (obstacle.active && checkCollision(newX - PLAYER_SIZE / 2, newY - PLAYER_SIZE / 2,
+                                         PLAYER_SIZE, PLAYER_SIZE,
+                                         obstacle.x - obstacle.width / 2, obstacle.y - obstacle.height / 2,
+                                         obstacle.width, obstacle.height))
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
 void handleCollisions()
 {
   static int debugCounter = 0;
@@ -1032,16 +1054,7 @@ void handleCollisions()
       {
         lives--;
         printf("DEBUG: Hit guard! Lives: %d\n", lives);
-        float dx = playerX - obstacle.x;
-        float dy = playerY - obstacle.y;
-        if (fabs(dx) > fabs(dy))
-        {
-          playerX += (dx > 0) ? PLAYER_SPEED * 2 : -PLAYER_SPEED * 2;
-        }
-        else
-        {
-          playerY += (dy > 0) ? PLAYER_SPEED * 2 : -PLAYER_SPEED * 2;
-        }
+        // No need to push back since movement is now prevented
       }
     }
   }
@@ -1119,7 +1132,7 @@ void handleCollisions()
 void init()
 {
   printf("DEBUG: Attempting to load texture: cluj-napoca_airport_map.bmp\n");
-  mapTexture = loadBMPTexture("./cluj-napoca_airport_map.bmp");
+  mapTexture = loadBMPTexture("./assets/images/cluj-napoca_airport_map.bmp");
   printf("DEBUG: Texture loaded with ID: %d\n", mapTexture);
 
   playerTexture = createColorTexture(0.8f, 0.6f, 0.4f);
@@ -1374,8 +1387,8 @@ void display()
     print(410, 320, (char *)"FLIGHT MISSED!");
     char loseText[100];
     sprintf(loseText, "Final Score: %d", score);
-    print(432, 280, loseText);
-    print(227, 240, (char *)"Better luck with booking your next flight... ROMANIA x_x");
+    print(436, 280, loseText);
+    print(277, 240, (char *)"Better luck with booking your next flight... x_x");
     print(400, 200, (char *)"Press R to play again!");
   }
 
@@ -1555,11 +1568,24 @@ void keyboard(unsigned char key, int x, int y)
     break;
   }
 
-  cameraOffsetX -= moveX;
-  cameraOffsetY -= moveY;
-
-  playerX += moveX;
-  playerY += moveY;
+  // Check if the new position would collide with obstacles
+  float newPlayerX = playerX + moveX;
+  float newPlayerY = playerY + moveY;
+  
+  // Only move if there's no collision with obstacles
+  if (!wouldCollideWithObstacle(newPlayerX, newPlayerY))
+  {
+    cameraOffsetX -= moveX;
+    cameraOffsetY -= moveY;
+    playerX = newPlayerX;
+    playerY = newPlayerY;
+  }
+  else if (!invincible)
+  {
+    // Apply damage when movement is blocked (only if not invincible)
+    lives--;
+    printf("DEBUG: Hit guard! Lives: %d\n", lives);
+  }
 
   float mapLeft = 50.0f;
   float mapRight = 950.0f;
@@ -1611,11 +1637,24 @@ void specialKeys(int key, int x, int y)
     break;
   }
 
-  cameraOffsetX -= moveX;
-  cameraOffsetY -= moveY;
-
-  playerX += moveX;
-  playerY += moveY;
+  // Check if the new position would collide with obstacles
+  float newPlayerX = playerX + moveX;
+  float newPlayerY = playerY + moveY;
+  
+  // Only move if there's no collision with obstacles
+  if (!wouldCollideWithObstacle(newPlayerX, newPlayerY))
+  {
+    cameraOffsetX -= moveX;
+    cameraOffsetY -= moveY;
+    playerX = newPlayerX;
+    playerY = newPlayerY;
+  }
+  else if (!invincible)
+  {
+    // Apply damage when movement is blocked (only if not invincible)
+    lives--;
+    printf("DEBUG: Hit guard! Lives: %d\n", lives);
+  }
 
   float mapLeft = 50.0f;
   float mapRight = 950.0f;
