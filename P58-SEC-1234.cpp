@@ -632,83 +632,108 @@ void drawFriend(float x, float y)
   glPushMatrix();
   glTranslatef(x, y, 0);
 
-  // Head/Skin tone
+  // Head/Skin tone (smaller for petite build)
   glColor3f(0.92f, 0.84f, 0.70f);
   glBegin(GL_POLYGON);
   for (int i = 0; i < 20; i++)
   {
     float theta = 2.0f * 3.1415926f * float(i) / 20.0f;
-    glVertex2f(6 * cosf(theta), 12 + 6 * sinf(theta));
+    glVertex2f(5 * cosf(theta), 10 + 5 * sinf(theta));
   }
   glEnd();
 
-  // Hair - Red/Brown
-  glColor3f(0.5f, 0.2f, 0.1f);
+  // Headscarf - Modern hijab style (covering head and shoulders)
+  glColor3f(1.0f, 1.0f, 1.0f); // White hijab
   glBegin(GL_POLYGON);
-  for (int i = 5; i < 35; i++)
-  {
-    float theta = 2.0f * 3.1415926f * float(i) / 20.0f;
-    glVertex2f(7 * cosf(theta), 13 + 7 * sinf(theta));
-  }
+  // Main scarf covering head
+  glVertex2f(-8, 12);
+  glVertex2f(8, 12);
+  glVertex2f(10, 2);
+  glVertex2f(8, -2);
+  glVertex2f(-8, -2);
+  glVertex2f(-10, 2);
   glEnd();
 
-  // Body with Romania Red jacket
-  glColor3f(ROMANIA_RED_R, ROMANIA_RED_G, ROMANIA_RED_B);
+  // Scarf drape on shoulder
+  glColor3f(0.9f, 0.9f, 0.9f); // Slightly off-white for depth
   glBegin(GL_POLYGON);
-  glVertex2f(-10, 6);
-  glVertex2f(10, 6);
-  glVertex2f(12, -10);
-  glVertex2f(-12, -10);
+  glVertex2f(-8, -2);
+  glVertex2f(8, -2);
+  glVertex2f(6, -8);
+  glVertex2f(-6, -8);
   glEnd();
 
-  // Pants (Jeans)
-  glColor3f(0.2f, 0.3f, 0.4f);
-  glBegin(GL_QUADS);
-  glVertex2f(-12, -10);
-  glVertex2f(12, -10);
-  glVertex2f(10, -18);
-  glVertex2f(-10, -18);
+  // Body with modern outfit (smaller for petite build)
+  glColor3f(0.3f, 0.4f, 0.6f); // Modern blue top
+  glBegin(GL_POLYGON);
+  glVertex2f(-8, 2);
+  glVertex2f(8, 2);
+  glVertex2f(9, -8);
+  glVertex2f(-9, -8);
   glEnd();
 
-  // Backpack with Romania yellow
-  glColor3f(ROMANIA_YELLOW_R, ROMANIA_YELLOW_G, ROMANIA_YELLOW_B);
+  // Pants (modern fit)
+  glColor3f(0.2f, 0.2f, 0.3f);
   glBegin(GL_QUADS);
-  glVertex2f(-15, 5);
-  glVertex2f(-10, 5);
-  glVertex2f(-10, -8);
-  glVertex2f(-15, -8);
+  glVertex2f(-9, -8);
+  glVertex2f(9, -8);
+  glVertex2f(8, -15);
+  glVertex2f(-8, -15);
+  glEnd();
+
+  // Small backpack
+  glColor3f(0.4f, 0.4f, 0.4f);
+  glBegin(GL_QUADS);
+  glVertex2f(-12, 0);
+  glVertex2f(-8, 0);
+  glVertex2f(-8, -6);
+  glVertex2f(-12, -6);
   glEnd();
 
   // Backpack straps
-  glColor3f(0.3f, 0.3f, 0.3f);
-  glLineWidth(3);
+  glColor3f(0.2f, 0.2f, 0.2f);
+  glLineWidth(2);
   glBegin(GL_LINES);
-  glVertex2f(-13, 5);
-  glVertex2f(-8, 6);
-  glVertex2f(-13, 0);
-  glVertex2f(-8, 3);
+  glVertex2f(-10, 0);
+  glVertex2f(-6, 2);
+  glVertex2f(-10, -3);
+  glVertex2f(-6, -1);
   glEnd();
 
-  // Arms waving
+  // Arms (smaller for petite build)
   glColor3f(0.92f, 0.84f, 0.70f);
   glBegin(GL_TRIANGLES);
-  glVertex2f(10, 4);
-  glVertex2f(16, 8);
-  glVertex2f(10, 0);
+  glVertex2f(8, 1);
+  glVertex2f(12, 4);
+  glVertex2f(8, -2);
   glEnd();
 
-  // Face (Smiling for a successful encounter)
-  glColor3f(0.0f, 0.0f, 0.0f);
-  glPointSize(3);
-  glBegin(GL_POINTS);
-  glVertex2f(-3, 13);
-  glVertex2f(3, 13);
+  // Face area - White circle (niqab style)
+  glColor3f(1.0f, 1.0f, 1.0f); // Pure white
+  glBegin(GL_POLYGON);
+  for (int i = 0; i < 20; i++)
+  {
+    float theta = 2.0f * 3.1415926f * float(i) / 20.0f;
+    glVertex2f(4 * cosf(theta), 8 + 4 * sinf(theta));
+  }
   glEnd();
-  glLineWidth(2);
-  glBegin(GL_LINE_STRIP);
-  glVertex2f(-3, 10);
-  glVertex2f(0, 9);
-  glVertex2f(3, 10);
+
+  // Very light skin tone - smaller circle inside
+  glColor3f(0.98f, 0.95f, 0.90f); // Very light skin tone
+  glBegin(GL_POLYGON);
+  for (int i = 0; i < 20; i++)
+  {
+    float theta = 2.0f * 3.1415926f * float(i) / 20.0f;
+    glVertex2f(2.5f * cosf(theta), 8 + 2.5f * sinf(theta));
+  }
+  glEnd();
+
+  // Eyes (small dots)
+  glColor3f(0.0f, 0.0f, 0.0f);
+  glPointSize(1);
+  glBegin(GL_POINTS);
+  glVertex2f(-1, 9);
+  glVertex2f(1, 9);
   glEnd();
 
   glPopMatrix();
