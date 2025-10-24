@@ -8,7 +8,7 @@
             "args": [
                 "-o",
                 "airport_rush",
-                "P58-SEC-1234.cpp",
+                "P15-58-6188.cpp",
                 "-framework", "OpenGL",
                 "-framework", "GLUT",
                 "-lGLEW",

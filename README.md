@@ -1,14 +1,17 @@
 # Airport Rush: Cluj-Napoca Last-Minute Boarding
+
 ## A True Story of Desperation, Schengen Expiry, and a 13:15 Arrival
 
-**P58-SEC-1234.cpp** - A 2D OpenGL game recreating the most stressful 30 minutes of our lives at Cluj-Napoca International Airport on June 25th, 2025.
+**P01-58-6188.cpp** - A 2D OpenGL game recreating the most stressful 30 minutes of our lives at Cluj-Napoca International Airport on June 25th, 2025.
 
 ---
 
 ## 🎯 The True Story Behind This Game
 
 ### The Desperate Situation
+
 On **June 25th, 2025**, my teammate and I found ourselves in a nightmare scenario:
+
 - **Flight**: CLJ → MUC → FRA → CAI (connecting through Munich and Frankfurt to Cairo)
 - **Boarding closes**: 13:15 sharp
 - **Our arrival**: 13:15 exactly (not a minute earlier)
@@ -17,7 +20,9 @@ On **June 25th, 2025**, my teammate and I found ourselves in a nightmare scenari
 - **Luggage problem**: We had massive luggage that needed special approval to bypass normal security
 
 ### The Real Airport Rush
+
 This game recreates our actual experience:
+
 1. **Rushing through security** with oversized luggage
 2. **Getting manager approval** to bypass normal procedures
 3. **Finding my teammate** who was lost in the chaos
@@ -31,6 +36,7 @@ This game recreates our actual experience:
 **Airport Rush** is a 2D OpenGL game where you must navigate Cluj-Napoca International Airport to catch your flight to Munich (Gate A01) while collecting your teammate and avoiding security guards.
 
 ### Core Gameplay
+
 - **Player**: You (traveler with luggage)
 - **Objective**: Reach Gate A01 with your teammate before time runs out
 - **Time Limit**: 60 seconds (representing the 30 minutes we had)
@@ -84,6 +90,7 @@ This game recreates our actual experience:
 | **No permanent effects** | ✅ All effects are temporary (5 seconds) as required | **COMPLETE** |
 
 **Power-up Details:**
+
 - **VIP Badge (Type 1)**: 5-second invincibility, allows passing through guards
 - **Fast Track Pass (Type 2)**: 5-second 2x speed boost
 
@@ -136,6 +143,7 @@ This game recreates our actual experience:
 ### ✅ **Bonus Requirements**
 
 #### **Sound System (FULL BONUS)**
+
 | Requirement | Implementation | Status |
 |------------|----------------|---------|
 | **Background music** | ✅ "Show Me Love - WizTheMc" plays during gameplay | **COMPLETE** |
@@ -145,6 +153,7 @@ This game recreates our actual experience:
 | **Game loss sound** | ✅ "Brazilian Phonk Remix" plays on loss | **COMPLETE** |
 
 #### **Texture System (FULL BONUS)**
+
 | Requirement | Implementation | Status |
 |------------|----------------|---------|
 | **BMP texture loading** | ✅ Custom BMP loader with header parsing and error handling | **COMPLETE** |
@@ -157,11 +166,13 @@ This game recreates our actual experience:
 ## 🎮 How to Play
 
 ### Setup Phase
+
 1. **Select Objects**: Click on icons in bottom panel (Guard, Boarding Pass, VIP Badge, Fast Track)
 2. **Place Objects**: Click in game area to place selected objects
 3. **Start Game**: Press 'R' to begin the 60-second countdown
 
 ### Game Phase
+
 1. **Move**: Use WASD or Arrow keys to navigate
 2. **Collect Friend**: Find and collect your teammate (required to win!)
 3. **Avoid Guards**: Don't hit security guards or you'll lose lives
@@ -169,6 +180,7 @@ This game recreates our actual experience:
 5. **Reach Gate**: Get to Gate A01 with your teammate to win!
 
 ### Controls
+
 - **WASD** or **Arrow Keys**: Move player
 - **Mouse**: Place objects (setup phase)
 - **R Key**: Start game or reset after win/lose
@@ -178,12 +190,15 @@ This game recreates our actual experience:
 ## 🏗️ Technical Implementation
 
 ### Compilation
+
 ```bash
-g++ -o airport_rush P58-SEC-1234.cpp -framework GLUT -framework OpenGL -lpthread
+g++ -o airport_rush P58-SEC-1234.cpp -framework GLUT -framework OpenGL
+./airport_rush 2>&1 | head -80
 ```
 
 ### Key Features
-- **Single File**: All code in P58-SEC-1234.cpp (1773 lines)
+
+- **Single File**: All code in P15-58-6188.cpp (1773 lines)
 - **OpenGL/GLUT**: Pure OpenGL implementation
 - **Multi-threading**: Audio system with pthread
 - **Bézier Curves**: Smooth plane animation
@@ -191,6 +206,7 @@ g++ -o airport_rush P58-SEC-1234.cpp -framework GLUT -framework OpenGL -lpthread
 - **State Management**: Setup/Running/Win/Lose states
 
 ### Graphics Primitives Used
+
 - **GL_POLYGON**: Player, guards, collectibles, power-ups
 - **GL_QUADS**: Background, panels, health indicators
 - **GL_TRIANGLES**: Player details, guard accessories
@@ -203,6 +219,7 @@ g++ -o airport_rush P58-SEC-1234.cpp -framework GLUT -framework OpenGL -lpthread
 ## 🎯 Game Elements & Story Connection
 
 ### Real Airport Layout
+
 - **Bottom**: Security/Passport Control (starting area)
 - **Middle**: Main terminal corridor with moving conveyor belt
 - **Top**: Gate A01 (your target - the actual gate we used)
@@ -211,6 +228,7 @@ g++ -o airport_rush P58-SEC-1234.cpp -framework GLUT -framework OpenGL -lpthread
 - **Fast Track**: The speed we needed to make it on time
 
 ### True Story Elements
+
 - **60-second timer**: Represents the 30 minutes we had
 - **5 lives**: The stress levels as we rushed through
 - **Friend collectible**: My teammate who was lost in the chaos
@@ -243,11 +261,13 @@ g++ -o airport_rush P58-SEC-1234.cpp -framework GLUT -framework OpenGL -lpthread
 ## 🎵 Audio System Details
 
 ### Background Music
+
 - **Gameplay**: "Show Me Love - WizTheMc" (loops during gameplay)
 - **Win**: "Golden Brown" (loops) + "Takeoff Sound" (plays once in parallel)
 - **Lose**: "Brazilian Phonk Remix" (loops)
 
 ### Technical Implementation
+
 - **Multi-threading**: Separate threads for each audio type
 - **Process management**: Proper cleanup and conflict prevention
 - **Parallel playback**: Win music and takeoff sound play simultaneously
@@ -257,11 +277,13 @@ g++ -o airport_rush P58-SEC-1234.cpp -framework GLUT -framework OpenGL -lpthread
 ## 🖼️ Texture System Details
 
 ### BMP Loading
+
 - **Custom loader**: Handles 24-bit uncompressed BMP files
 - **Error handling**: Comprehensive error checking and debugging
 - **Memory management**: Proper allocation and cleanup
 
 ### Applied Textures
+
 - **Airport map**: Real Cluj-Napoca airport layout
 - **Color textures**: Programmatically generated for all game elements
 - **Small objects**: Use solid colors (eyes, small details)
@@ -277,6 +299,7 @@ This game captures the most stressful 30 minutes of our lives. We arrived at Clu
 3. **Losing all our money** on the original tickets
 
 The game's mechanics reflect our real experience:
+
 - **Rushing through security** with oversized luggage
 - **Getting manager approval** to bypass normal procedures  
 - **Finding my teammate** who was lost in the chaos
@@ -288,7 +311,7 @@ The game's mechanics reflect our real experience:
 
 ## 🏆 Submission Details
 
-- **File**: P58-SEC-1234.cpp (1773 lines)
+- **File**: P15-58-6188.cpp (1773 lines)
 - **Format**: Single C++ file as required
 - **Dependencies**: OpenGL, GLUT, pthread
 - **Compilation**: No errors, fully functional
